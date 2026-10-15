@@ -489,21 +489,75 @@ fn md5_hash(input: &str) -> u64 {
 }
 
 #[cfg(target_os = "windows")]
+#[repr(C)]
+struct ProcessEntry32W {
+    dw_size: u32,
+    cnt_usage: u32,
+    th32_process_id: u32,
+    th32_default_heap_id: usize,
+    th32_module_id: u32,
+    cnt_threads: u32,
+    th32_parent_process_id: u32,
+    pc_pri_class_base: i32,
+    dw_flags: u32,
+    sz_exe_file: [u16; 260],
+}
+
+#[cfg(target_os = "windows")]
 unsafe extern "system" {
     fn GetCurrentProcess() -> *mut std::ffi::c_void;
+    fn GetCurrentProcessId() -> u32;
     fn SetProcessWorkingSetSize(
         h_process: *mut std::ffi::c_void,
         dw_minimum_working_set_size: usize,
         dw_maximum_working_set_size: usize,
     ) -> i32;
+    fn CreateToolhelp32Snapshot(dw_flags: u32, th32_process_id: u32) -> *mut std::ffi::c_void;
+    fn Process32FirstW(h_snapshot: *mut std::ffi::c_void, lppe: *mut ProcessEntry32W) -> i32;
+    fn Process32NextW(h_snapshot: *mut std::ffi::c_void, lppe: *mut ProcessEntry32W) -> i32;
+    fn OpenProcess(dw_desired_access: u32, b_inherit_handle: i32, dw_process_id: u32) -> *mut std::ffi::c_void;
+    fn CloseHandle(h_object: *mut std::ffi::c_void) -> i32;
 }
 
 #[tauri::command]
 fn trim_memory() {
     #[cfg(target_os = "windows")]
     unsafe {
-        let handle = GetCurrentProcess();
-        SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
+        let current_pid = GetCurrentProcessId();
+        let current_handle = GetCurrentProcess();
+        SetProcessWorkingSetSize(current_handle, usize::MAX, usize::MAX);
+
+        let snapshot = CreateToolhelp32Snapshot(0x00000002, 0); // TH32CS_SNAPPROCESS
+        if !snapshot.is_null() && snapshot as isize != -1 {
+            let mut entry = ProcessEntry32W {
+                dw_size: std::mem::size_of::<ProcessEntry32W>() as u32,
+                cnt_usage: 0,
+                th32_process_id: 0,
+                th32_default_heap_id: 0,
+                th32_module_id: 0,
+                cnt_threads: 0,
+                th32_parent_process_id: 0,
+                pc_pri_class_base: 0,
+                dw_flags: 0,
+                sz_exe_file: [0; 260],
+            };
+
+            if Process32FirstW(snapshot, &mut entry) != 0 {
+                loop {
+                    if entry.th32_parent_process_id == current_pid {
+                        let child_handle = OpenProcess(0x0100 | 0x0400, 0, entry.th32_process_id); // PROCESS_SET_QUOTA | PROCESS_QUERY_INFORMATION
+                        if !child_handle.is_null() {
+                            SetProcessWorkingSetSize(child_handle, usize::MAX, usize::MAX);
+                            CloseHandle(child_handle);
+                        }
+                    }
+                    if Process32NextW(snapshot, &mut entry) == 0 {
+                        break;
+                    }
+                }
+            }
+            CloseHandle(snapshot);
+        }
     }
 }
 

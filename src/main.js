@@ -1608,11 +1608,18 @@ async function init() {
     }
   });
 
+  window.addEventListener('blur', () => {
+    if (state.isTauri) invoke('trim_memory').catch(() => {});
+  });
+
   // Initial startup trim after DOM & session are ready
   if (state.isTauri) {
     setTimeout(() => {
       invoke('trim_memory').catch(() => {});
     }, 2500);
+    setTimeout(() => {
+      invoke('trim_memory').catch(() => {});
+    }, 6000);
   }
 }
 
