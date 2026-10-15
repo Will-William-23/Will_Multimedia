@@ -21,7 +21,7 @@
         "resizable": true,
         "fullscreen": false,
         "backgroundColor": "#090d16",
-        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,TranslateUI --disable-extensions --disable-component-update --disable-background-networking --disable-sync --no-pings"
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,TranslateUI --disable-extensions --disable-component-update --disable-background-networking --disable-sync --no-pings --renderer-process-limit=1"
       }
     ]
   },

@@ -488,6 +488,25 @@ fn md5_hash(input: &str) -> u64 {
     hash
 }
 
+#[cfg(target_os = "windows")]
+extern "system" {
+    fn GetCurrentProcess() -> *mut std::ffi::c_void;
+    fn SetProcessWorkingSetSize(
+        h_process: *mut std::ffi::c_void,
+        dw_minimum_working_set_size: usize,
+        dw_maximum_working_set_size: usize,
+    ) -> i32;
+}
+
+#[tauri::command]
+fn trim_memory() {
+    #[cfg(target_os = "windows")]
+    unsafe {
+        let handle = GetCurrentProcess();
+        SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _port = start_streaming_server();
@@ -501,7 +520,8 @@ pub fn run() {
             scan_folder,
             scan_file,
             save_cache,
-            load_cache
+            load_cache,
+            trim_memory
         ])
         .run(tauri::generate_context!())
         .expect("error while running will multimedia player");

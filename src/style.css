@@ -28,6 +28,9 @@
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-sans: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-mono: 'Cascadia Code', 'Consolas', monospace;
 }
 
 * {
@@ -39,7 +42,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--bg-dark);
   color: var(--text-primary);
   min-height: 100vh;
@@ -1067,7 +1070,7 @@ body {
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .badge-accent {
@@ -1205,7 +1208,7 @@ body {
   color: var(--text-muted);
   width: 22px;
   text-align: center;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .queue-info {
@@ -1525,7 +1528,7 @@ body {
   border: 1px solid var(--border-subtle);
   color: #fff;
   font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -1572,7 +1575,7 @@ body {
 }
 
 .hud-time {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
@@ -1838,7 +1841,7 @@ body {
 
 .time-label {
   font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   color: var(--text-muted);
   min-width: 38px;
 }
@@ -1993,7 +1996,7 @@ kbd {
   border: 1px solid var(--border-subtle);
   padding: 4px 8px;
   border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   color: var(--accent-cyan);

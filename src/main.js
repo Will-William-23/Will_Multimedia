@@ -1602,8 +1602,18 @@ async function init() {
   window.addEventListener('beforeunload', () => saveSession());
   window.addEventListener('pagehide', () => saveSession());
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') saveSession();
+    if (document.visibilityState === 'hidden') {
+      saveSession();
+      if (state.isTauri) invoke('trim_memory').catch(() => {});
+    }
   });
+
+  // Initial startup trim after DOM & session are ready
+  if (state.isTauri) {
+    setTimeout(() => {
+      invoke('trim_memory').catch(() => {});
+    }, 2500);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', init);
