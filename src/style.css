@@ -58,6 +58,7 @@ body {
   filter: blur(80px);
   pointer-events: none;
   z-index: 0;
+  transform: translateZ(0);
   transition: background 0.8s ease;
 }
 
@@ -1292,6 +1293,7 @@ body {
   opacity: 0.4;
   pointer-events: none;
   z-index: 1;
+  transform: translateZ(0);
 }
 
 #mainVideoPlayer {

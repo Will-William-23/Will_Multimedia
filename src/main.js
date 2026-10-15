@@ -286,13 +286,19 @@ let ambientCanvasCtx = null;
 let videoAmbientInterval = null;
 let hudTimeout = null;
 
-function setupVideoAmbient() {
+function startVideoAmbient() {
+  if (state.currentSection !== 'video' || !state.isPlaying || el.mainVideoPlayer.paused) {
+    stopVideoAmbient();
+    return;
+  }
   if (!el.ambientVideoCanvas) return;
-  ambientCanvasCtx = el.ambientVideoCanvas.getContext('2d');
-  el.ambientVideoCanvas.width = 64;
-  el.ambientVideoCanvas.height = 36;
+  if (!ambientCanvasCtx) {
+    ambientCanvasCtx = el.ambientVideoCanvas.getContext('2d');
+    el.ambientVideoCanvas.width = 64;
+    el.ambientVideoCanvas.height = 36;
+  }
 
-  if (videoAmbientInterval) clearInterval(videoAmbientInterval);
+  if (videoAmbientInterval) return;
   videoAmbientInterval = setInterval(() => {
     if (state.currentSection === 'video' && state.isPlaying && !el.mainVideoPlayer.paused) {
       try {
@@ -300,8 +306,17 @@ function setupVideoAmbient() {
       } catch (err) {
         // Ignored
       }
+    } else {
+      stopVideoAmbient();
     }
-  }, 120);
+  }, 150);
+}
+
+function stopVideoAmbient() {
+  if (videoAmbientInterval) {
+    clearInterval(videoAmbientInterval);
+    videoAmbientInterval = null;
+  }
 }
 
 function resetHudTimer() {
@@ -339,6 +354,7 @@ function goToSection(targetSection, loadMedia = true) {
 
   if (targetSection === 'home') {
     pauseAudioVisualizer();
+    stopVideoAmbient();
     // Show Home
     el.headerHome.classList.remove('hidden');
     el.headerAudio.classList.add('hidden');
@@ -360,6 +376,7 @@ function goToSection(targetSection, loadMedia = true) {
     updateResumeBoxUI();
 
   } else if (targetSection === 'audio') {
+    stopVideoAmbient();
     state.lastActiveSection = 'audio';
     // Pause video cleanly
     el.mainVideoPlayer.pause();
@@ -404,6 +421,10 @@ function goToSection(targetSection, loadMedia = true) {
 
     if (loadMedia && !el.mainVideoPlayer.src && state.videoPlaylist.length > 0 && state.videoIndex >= 0) {
       loadVideoItem(state.videoIndex, false, state.playbackPosition);
+    }
+
+    if (state.isPlaying) {
+      startVideoAmbient();
     }
   }
 
@@ -681,6 +702,7 @@ function renderAudioPlaylist() {
 
   el.audioPlaylistCountBadge.textContent = `${state.audioPlaylist.length} Pistas`;
   el.audioPlaylistList.innerHTML = '';
+  const fragment = document.createDocumentFragment();
 
   state.audioFilteredPlaylist.forEach(item => {
     const originalIndex = state.audioPlaylist.findIndex(p => p.id === item.id);
@@ -714,8 +736,10 @@ function renderAudioPlaylist() {
       removeAudioItem(originalIndex);
     });
 
-    el.audioPlaylistList.appendChild(div);
+    fragment.appendChild(div);
   });
+
+  el.audioPlaylistList.appendChild(fragment);
 }
 
 function removeAudioItem(index) {
@@ -793,6 +817,7 @@ function renderVideoPlaylist() {
   el.videoPlaylistCountBadge.textContent = `${state.videoPlaylist.length} Videos`;
   el.videoQueueBadge.textContent = state.videoPlaylist.length > 0 ? `${state.videoIndex + 1}/${state.videoPlaylist.length}` : '0';
   el.videoPlaylistList.innerHTML = '';
+  const fragment = document.createDocumentFragment();
 
   state.videoFilteredPlaylist.forEach(item => {
     const originalIndex = state.videoPlaylist.findIndex(p => p.id === item.id);
@@ -818,8 +843,10 @@ function renderVideoPlaylist() {
       removeVideoItem(originalIndex);
     });
 
-    el.videoPlaylistList.appendChild(div);
+    fragment.appendChild(div);
   });
+
+  el.videoPlaylistList.appendChild(fragment);
 }
 
 function removeVideoItem(index) {
@@ -901,6 +928,11 @@ function setPlayingState(isPlaying) {
     }
   } else if (state.currentSection === 'video') {
     resetHudTimer();
+    if (isPlaying) {
+      startVideoAmbient();
+    } else {
+      stopVideoAmbient();
+    }
   }
 }
 
@@ -1554,7 +1586,7 @@ function handleKeyboardShortcuts(e) {
 // ============================================================
 async function init() {
   initEventListeners();
-  setupVideoAmbient();
+
 
   if (state.isTauri) {
     try {
