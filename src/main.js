@@ -896,6 +896,8 @@ async function togglePlayPause() {
   }
 }
 
+let splashTimeout = null;
+
 function showSplashFeedback(isPlaying) {
   if (state.currentSection !== 'video' || !el.hudCenterSplash) return;
   const playIcon = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
@@ -904,6 +906,11 @@ function showSplashFeedback(isPlaying) {
   el.hudCenterSplash.classList.remove('animate');
   void el.hudCenterSplash.offsetWidth; // Force instant reflow
   el.hudCenterSplash.classList.add('animate');
+
+  if (splashTimeout) clearTimeout(splashTimeout);
+  splashTimeout = setTimeout(() => {
+    el.hudCenterSplash.classList.remove('animate');
+  }, 450);
 }
 
 function playNext() {
@@ -1234,7 +1241,10 @@ function initEventListeners() {
   el.audioVolumeSlider.addEventListener('input', (e) => setVolume(parseFloat(e.target.value)));
 
   // Video Playback Controls
-  el.btnVideoPlayPause.addEventListener('click', togglePlayPause);
+  el.btnVideoPlayPause.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePlayPause();
+  });
   el.btnVideoNext.addEventListener('click', playNext);
   el.btnVideoPrev.addEventListener('click', playPrev);
   el.btnVideoSkipBack.addEventListener('click', () => seekRelative(-10));
@@ -1271,11 +1281,33 @@ function initEventListeners() {
   });
 
   el.cinemaContainer.addEventListener('mousemove', resetHudTimer);
+
+  let cinemaClickTimeout = null;
   el.cinemaContainer.addEventListener('click', (e) => {
-    if (e.target.closest('.video-hud') || e.target.closest('.video-playlist-drawer')) return;
-    togglePlayPause();
+    if (e.target.closest('.hud-top') || e.target.closest('.hud-bottom') || e.target.closest('.video-playlist-drawer')) {
+      return;
+    }
+    if (cinemaClickTimeout) {
+      clearTimeout(cinemaClickTimeout);
+      cinemaClickTimeout = null;
+      return;
+    }
+    cinemaClickTimeout = setTimeout(() => {
+      cinemaClickTimeout = null;
+      togglePlayPause();
+    }, 220);
   });
-  el.cinemaContainer.addEventListener('dblclick', toggleFullscreen);
+
+  el.cinemaContainer.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.hud-top') || e.target.closest('.hud-bottom') || e.target.closest('.video-playlist-drawer')) {
+      return;
+    }
+    if (cinemaClickTimeout) {
+      clearTimeout(cinemaClickTimeout);
+      cinemaClickTimeout = null;
+    }
+    toggleFullscreen();
+  });
 
   // Scrubbing
   setupScrubbing(el.audioScrubContainer, el.audioScrubProgress, el.audioScrubThumb, el.mainAudioPlayer);

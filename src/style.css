@@ -1315,7 +1315,7 @@ body {
   background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.85) 100%);
   opacity: 1;
   transition: opacity 0.3s ease;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .video-hud.hud-hidden {
@@ -1332,6 +1332,7 @@ body {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  pointer-events: auto;
 }
 
 .hud-title-info {
@@ -1429,6 +1430,7 @@ body {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  pointer-events: auto;
 }
 
 /* Fullscreen adaptation */
