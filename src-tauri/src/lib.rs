@@ -489,7 +489,7 @@ fn md5_hash(input: &str) -> u64 {
 }
 
 #[cfg(target_os = "windows")]
-extern "system" {
+unsafe extern "system" {
     fn GetCurrentProcess() -> *mut std::ffi::c_void;
     fn SetProcessWorkingSetSize(
         h_process: *mut std::ffi::c_void,
