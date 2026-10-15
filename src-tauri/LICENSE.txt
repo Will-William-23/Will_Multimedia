@@ -1,0 +1,32 @@
+=============================================================================
+                    WILL MULTIMEDIA PLAYER v1.0
+          Acuerdo de Licencia de Usuario y Software Propietario
+=============================================================================
+
+Copyright (c) 2026 Will Multimedia. Todos los derechos reservados.
+Desarrollado y propiedad exclusiva de Will.
+
+1. PROPIEDAD DEL SOFTWARE
+El software "Will Multimedia Player", incluyendo su diseño de interfaz de
+usuario, marcas, logotipos ("W"), código fuente, arquitectura de motor
+multimedia y componentes asociados, es propiedad intelectual exclusiva de Will.
+
+2. CONCESIÓN DE LICENCIA DE USO
+Por medio del presente instalador, se concede una licencia personal, no
+exclusiva, revocable e intransferible para instalar y ejecutar este software
+en sus dispositivos compatibles con el propósito de reproducir archivos de
+audio y video.
+
+3. RESTRICCIONES
+Queda expresamente prohibido descompilar, modificar, revender, arrendar o
+reclamar la autoría total o parcial de este software sin la previa
+autorización expresa por escrito de su propietario.
+
+4. EXENCIÓN DE GARANTÍAS
+El software se proporciona "tal cual", con el compromiso de ofrecer la mayor
+fluidez, ligereza, privacidad y fidelidad en la reproducción multimedia.
+
+=============================================================================
+Al presionar "Acepto" o continuar con la instalación, usted confirma su
+aceptación de estos términos de uso y propiedad.
+=============================================================================

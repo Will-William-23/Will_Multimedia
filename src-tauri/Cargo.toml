@@ -1,8 +1,8 @@
 [package]
 name = "app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Will Multimedia Player - Reproductor Premium de Audio y Video"
+authors = ["Will"]
 license = ""
 repository = ""
 edition = "2024"
