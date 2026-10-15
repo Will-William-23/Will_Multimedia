@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "tauri": "npx @tauri-apps/cli"
+    "tauri": "npx @tauri-apps/cli",
+    "tauri:build": "npx @tauri-apps/cli build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0",

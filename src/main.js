@@ -176,11 +176,56 @@ function naturalSortItems(list, asc = true) {
 }
 
 // ============================================================
-// AUDIO VISUALIZER (DYNAMIC SPECTRUM RHYTHM)
+// ============================================================
+// AUDIO VISUALIZER (DYNAMIC SPECTRUM RHYTHM - OPTIMIZED)
 // ============================================================
 let animFrameId = null;
 
+function pauseAudioVisualizer() {
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+}
+
+function drawStaticVisualizer() {
+  const canvas = el.visualizerCanvas;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const barCount = 36;
+  const barWidth = (canvas.width / barCount) - 3;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
+  grad.addColorStop(0, '#06b6d4');
+  grad.addColorStop(0.5, '#3b82f6');
+  grad.addColorStop(1, '#8b5cf6');
+
+  ctx.fillStyle = grad;
+  ctx.shadowBlur = 4;
+  ctx.shadowColor = 'rgba(6, 182, 212, 0.35)';
+
+  let x = 2;
+  for (let i = 0; i < barCount; i++) {
+    const percent = Math.sin(i * 0.25) * 0.10 + 0.15;
+    const barHeight = Math.max(4, percent * (canvas.height - 8));
+    ctx.beginPath();
+    ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [3, 3, 0, 0]);
+    ctx.fill();
+    x += barWidth + 3;
+  }
+}
+
 function setupAudioVisualizer() {
+  if (state.currentSection !== 'audio') {
+    pauseAudioVisualizer();
+    return;
+  }
+  if (!state.isPlaying) {
+    pauseAudioVisualizer();
+    drawStaticVisualizer();
+    return;
+  }
   if (animFrameId) return;
   renderVisualizer();
 }
@@ -192,37 +237,36 @@ function renderVisualizer() {
   const barCount = 36;
   const barWidth = (canvas.width / barCount) - 3;
 
+  // Cache gradient outside the animation loop to eliminate garbage collection pressure
+  const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
+  grad.addColorStop(0, '#06b6d4');
+  grad.addColorStop(0.5, '#3b82f6');
+  grad.addColorStop(1, '#8b5cf6');
+
   function draw() {
+    if (state.currentSection !== 'audio' || !state.isPlaying) {
+      pauseAudioVisualizer();
+      if (state.currentSection === 'audio') drawStaticVisualizer();
+      return;
+    }
+
     animFrameId = requestAnimationFrame(draw);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const now = Date.now();
     let x = 2;
 
+    ctx.fillStyle = grad;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(6, 182, 212, 0.45)';
+
     for (let i = 0; i < barCount; i++) {
-      let percent = 0;
-
-      if (state.isPlaying && state.currentSection === 'audio') {
-        // Dynamic rhythmic spectrum bars reacting to playback tempo and frequencies
-        const baseFreq = Math.sin((now / 180) + (i * 0.45)) * 0.35 + 0.45;
-        const beatPulse = Math.pow(Math.sin(now / 350), 4) * 0.4;
-        const curve = 1.0 - Math.abs((i - (barCount * 0.35)) / (barCount * 0.7));
-        percent = Math.max(0.08, Math.min(0.95, (baseFreq + beatPulse) * curve));
-      } else {
-        // Gentle resting wave when paused
-        percent = (Math.sin((now / 600) + (i * 0.25)) * 0.12 + 0.18);
-      }
-
+      const baseFreq = Math.sin((now / 180) + (i * 0.45)) * 0.35 + 0.45;
+      const beatPulse = Math.pow(Math.sin(now / 350), 4) * 0.4;
+      const curve = 1.0 - Math.abs((i - (barCount * 0.35)) / (barCount * 0.7));
+      const percent = Math.max(0.08, Math.min(0.95, (baseFreq + beatPulse) * curve));
       const barHeight = Math.max(4, percent * (canvas.height - 8));
 
-      const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
-      grad.addColorStop(0, '#06b6d4');
-      grad.addColorStop(0.5, '#3b82f6');
-      grad.addColorStop(1, '#8b5cf6');
-
-      ctx.fillStyle = grad;
-      ctx.shadowBlur = state.isPlaying ? 10 : 4;
-      ctx.shadowColor = 'rgba(6, 182, 212, 0.45)';
       ctx.beginPath();
       ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [3, 3, 0, 0]);
       ctx.fill();
@@ -231,8 +275,9 @@ function renderVisualizer() {
     }
   }
 
-  draw();
+  animFrameId = requestAnimationFrame(draw);
 }
+
 
 // ============================================================
 // VIDEO AMBIENT LIGHTING & HUD TIMER
@@ -293,6 +338,7 @@ function goToSection(targetSection, loadMedia = true) {
   state.currentSection = targetSection;
 
   if (targetSection === 'home') {
+    pauseAudioVisualizer();
     // Show Home
     el.headerHome.classList.remove('hidden');
     el.headerAudio.classList.add('hidden');
@@ -338,6 +384,7 @@ function goToSection(targetSection, loadMedia = true) {
     }
 
   } else if (targetSection === 'video') {
+    pauseAudioVisualizer();
     state.lastActiveSection = 'video';
     // Pause audio cleanly
     el.mainAudioPlayer.pause();
@@ -846,6 +893,12 @@ function setPlayingState(isPlaying) {
 
   if (state.currentSection === 'audio') {
     updateAudioPlaylistActiveState(isPlaying);
+    if (isPlaying) {
+      setupAudioVisualizer();
+    } else {
+      pauseAudioVisualizer();
+      drawStaticVisualizer();
+    }
   } else if (state.currentSection === 'video') {
     resetHudTimer();
   }
