@@ -88,6 +88,13 @@
             </svg>
             <span>Añadir a Cola</span>
           </button>
+          <button id="btnAudioEdit" class="btn-action btn-action-edit" title="Editar audio actual">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span>EDITAR</span>
+          </button>
         </div>
       </div>
 
@@ -135,6 +142,13 @@
             </svg>
             <span>Añadir a Cola</span>
           </button>
+          <button id="btnVideoEdit" class="btn-action btn-action-edit" title="Editar video actual">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span>EDITAR</span>
+          </button>
           <button id="btnVideoQueueToggle" class="btn-hud" title="Abrir cola de reproducción">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="8" y1="6" x2="21" y2="6"></line>
@@ -145,6 +159,53 @@
               <line x1="3" y1="18" x2="3.01" y2="18"></line>
             </svg>
             <span id="videoQueueBadge">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Header State D: IMAGE SECTION -->
+      <div id="headerImage" class="header-content hidden">
+        <div class="header-left">
+          <button id="btnBackFromImage" class="btn-back" title="Volver al Menú Principal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Regresar</span>
+          </button>
+          <div class="brand-badge brand-badge-compact">
+            <div class="brand-icon">
+              <img src="/app-icon.png" class="brand-logo-img" alt="W" />
+            </div>
+            <div class="brand-text">
+              <span class="brand-name">WILL MULTIMEDIA</span>
+            </div>
+          </div>
+          <div class="section-title-wrap">
+            <span class="section-badge badge-image">SECCIÓN IMÁGENES</span>
+            <span id="imageHeaderTitle" class="section-folder-label">Sin imagen cargada</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button id="btnImageOpenFiles" class="btn-action" title="Abrir una o varias fotos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>Abrir Fotos</span>
+          </button>
+          <button id="btnImageOpenFolder" class="btn-action btn-action-image" title="Abrir carpeta de fotos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Abrir Carpeta</span>
+          </button>
+          <button id="btnImageEdit" class="btn-action btn-action-edit" title="Editar foto actual">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span>EDITAR</span>
           </button>
         </div>
       </div>
@@ -204,6 +265,29 @@
               <div class="card-footer">
                 <button class="btn-enter btn-enter-video" id="btnEnterVideo">
                   <span>Video</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Imágenes -->
+            <div class="section-card card-image" id="cardEnterImage">
+              <div class="card-glow glow-fuchsia"></div>
+              <div class="card-icon-box fuchsia">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </div>
+              <h3>Sección de Imágenes</h3>
+              <p>Visualización y edición de fotos (.jpg, .png, .webp, .gif, .bmp, .svg, .avif, .ico).</p>
+              <div class="card-footer">
+                <button class="btn-enter btn-enter-image" id="btnEnterImage">
+                  <span>Imágenes</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -325,7 +409,12 @@
                 <span class="hud-badge">Video</span>
                 <span id="videoTitleDisplay" class="hud-title">Video</span>
               </div>
-              <div class="hud-top-actions">
+                <button id="btnHudVideoEdit" class="btn-hud" title="Editar video">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                </button>
                 <button id="btnPip" class="btn-hud" title="Minimizar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="4" width="20" height="16" rx="2"></rect>
@@ -470,6 +559,77 @@
         </div>
       </section>
 
+      <!-- 4. SECCIÓN DE IMÁGENES (VISOR Y GESTOR) -->
+      <section id="imageView" class="view-panel image-view hidden">
+        <div class="image-stage-wrap">
+          <!-- Floating Image Toolbar -->
+          <div class="image-floating-toolbar">
+            <div class="toolbar-group">
+              <button id="btnImagePrev" class="btn-img-tool" title="Foto Anterior (P o ←)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <span id="imageCounterBadge" class="img-counter">0 / 0</span>
+              <button id="btnImageNext" class="btn-img-tool" title="Foto Siguiente (N o →)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+              <button id="btnImageZoomIn" class="btn-img-tool" title="Acercar (+)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <span id="imageZoomLabel" class="zoom-label">100%</span>
+              <button id="btnImageZoomOut" class="btn-img-tool" title="Alejar (-)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <button id="btnImageResetZoom" class="btn-img-tool" title="Restablecer tamaño">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+              <button id="btnImageRotateLeft" class="btn-img-tool" title="Girar 90° Izquierda">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              </button>
+              <button id="btnImageRotateRight" class="btn-img-tool" title="Girar 90° Derecha">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              </button>
+              <button id="btnImageFlipH" class="btn-img-tool" title="Voltear Horizontal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M4 17l6-5-6-5v10zM20 17l-6-5 6-5v10z"></path></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <button id="btnImageStageEdit" class="btn-img-action" title="Abrir editor para esta imagen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>EDITAR FOTO</span>
+            </button>
+          </div>
+
+          <!-- Main Viewport for pan & zoom -->
+          <div class="image-viewport" id="imageViewport">
+            <div class="image-canvas-container" id="imageCanvasContainer">
+              <img id="mainImageDisplay" class="main-image-display hidden" alt="Vista previa" draggable="false" />
+              <div id="imageEmptyPlaceholder" class="image-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <h3>No hay imagen cargada</h3>
+                <p>Haz clic en "Abrir Fotos" o "Abrir Carpeta" para comenzar.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thumbnail filmstrip at bottom -->
+          <div class="image-filmstrip-bar" id="imageFilmstripBar">
+            <div class="filmstrip-scroll" id="imageFilmstripList">
+              <!-- Dynamically populated thumbnails -->
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- Bottom Audio Dock Player Bar (Only visible inside Audio Section) -->
@@ -576,6 +736,216 @@
           <div class="shortcut-item"><kbd>P</kbd><span>Pista Anterior en Cola</span></div>
           <div class="shortcut-item"><kbd>L</kbd><span>Alternar Repetición</span></div>
           <div class="shortcut-item"><kbd>S</kbd><span>Alternar Modo Aleatorio</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+           MODAL EDITORES MULTIMEDIA (IMAGEN / VIDEO / AUDIO)
+           ============================================================ -->
+    <div id="editorModal" class="modal-backdrop hidden">
+      <div class="modal-card editor-modal-card">
+        <div class="modal-header">
+          <div class="editor-header-title">
+            <span class="editor-badge" id="editorBadgeType">EDITOR</span>
+            <h3 id="editorModalTitle">Editor Multimedia</h3>
+          </div>
+          <button id="btnCloseEditorModal" class="btn-icon-sm" title="Cerrar">&times;</button>
+        </div>
+
+        <div class="editor-modal-body">
+          <!-- 1. SUB-PANEL: EDITOR DE FOTOS / IMÁGENES -->
+          <div id="editorImagePanel" class="editor-subpanel hidden">
+            <div class="editor-split">
+              <!-- Preview Area with Canvas -->
+              <div class="editor-preview-box">
+                <div class="editor-canvas-wrap">
+                  <canvas id="imageEditorCanvas"></canvas>
+                </div>
+              </div>
+
+              <!-- Controls Sidebar -->
+              <div class="editor-controls-box">
+                <h4>Ajustes de Imagen</h4>
+
+                <div class="editor-ctrl-group">
+                  <label>Recorte (Aspect Ratio)</label>
+                  <div class="ratio-btn-group">
+                    <button class="btn-ctrl-sub active" data-crop="original">Original</button>
+                    <button class="btn-ctrl-sub" data-crop="1:1">1:1</button>
+                    <button class="btn-ctrl-sub" data-crop="4:3">4:3</button>
+                    <button class="btn-ctrl-sub" data-crop="16:9">16:9</button>
+                  </div>
+                </div>
+
+                <div class="editor-ctrl-group">
+                  <label>Orientación</label>
+                  <div class="btn-row">
+                    <button id="btnEditorRotL" class="btn-ctrl-action" title="Girar 90° a la Izquierda">↺ 90° Izq</button>
+                    <button id="btnEditorRotR" class="btn-ctrl-action" title="Girar 90° a la Derecha">↻ 90° Der</button>
+                    <button id="btnEditorFlipH" class="btn-ctrl-action" title="Voltear Horizontal">↔ Espejo</button>
+                  </div>
+                </div>
+
+                <div class="editor-ctrl-group">
+                  <label>Filtros y Color</label>
+                  <div class="slider-row">
+                    <span>Brillo</span>
+                    <input type="range" id="filterBrightness" min="50" max="150" value="100" />
+                    <span id="valBrightness">100%</span>
+                  </div>
+                  <div class="slider-row">
+                    <span>Contraste</span>
+                    <input type="range" id="filterContrast" min="50" max="150" value="100" />
+                    <span id="valContrast">100%</span>
+                  </div>
+                  <div class="slider-row">
+                    <span>Saturación</span>
+                    <input type="range" id="filterSaturation" min="0" max="200" value="100" />
+                    <span id="valSaturation">100%</span>
+                  </div>
+                  <div class="slider-row">
+                    <span>B/N (Escala de grises)</span>
+                    <input type="range" id="filterGrayscale" min="0" max="100" value="0" />
+                    <span id="valGrayscale">0%</span>
+                  </div>
+                  <div class="slider-row">
+                    <span>Sepia</span>
+                    <input type="range" id="filterSepia" min="0" max="100" value="0" />
+                    <span id="valSepia">0%</span>
+                  </div>
+                </div>
+
+                <div class="editor-modal-actions">
+                  <button id="btnResetImageFilter" class="btn-secondary">Restablecer</button>
+                  <button id="btnSaveEditedImage" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Guardar Imagen</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. SUB-PANEL: EDITOR DE VIDEO (CORTE / VELOCIDAD / AUDIO) -->
+          <div id="editorVideoPanel" class="editor-subpanel hidden">
+            <div class="editor-split">
+              <div class="editor-preview-box">
+                <video id="videoEditorPreview" controls playsinline></video>
+              </div>
+
+              <div class="editor-controls-box">
+                <h4>Recortar Video</h4>
+                <p class="editor-hint">Selecciona el fragmento que deseas extraer y guardar.</p>
+
+                <div class="editor-ctrl-group">
+                  <div class="time-inputs-row">
+                    <div class="time-field">
+                      <label>Inicio (seg)</label>
+                      <input type="number" id="videoTrimStart" min="0" step="0.5" value="0" />
+                      <button id="btnSetVideoStart" class="btn-sub-xs">Marcar Actual</button>
+                    </div>
+                    <div class="time-field">
+                      <label>Fin (seg)</label>
+                      <input type="number" id="videoTrimEnd" min="0" step="0.5" value="0" />
+                      <button id="btnSetVideoEnd" class="btn-sub-xs">Marcar Actual</button>
+                    </div>
+                  </div>
+                  <div class="duration-readout">
+                    <span>Duración del corte:</span>
+                    <strong id="videoTrimDuration">00:00</strong>
+                  </div>
+                </div>
+
+                <div class="editor-ctrl-group">
+                  <label>Velocidad del Fragmento</label>
+                  <div class="ratio-btn-group">
+                    <button class="btn-ctrl-sub active" data-vspeed="1.0">1.0x</button>
+                    <button class="btn-ctrl-sub" data-vspeed="1.25">1.25x</button>
+                    <button class="btn-ctrl-sub" data-vspeed="1.5">1.5x</button>
+                    <button class="btn-ctrl-sub" data-vspeed="2.0">2.0x</button>
+                  </div>
+                </div>
+
+                <div class="editor-ctrl-group">
+                  <label>Pista de Audio</label>
+                  <div class="checkbox-row">
+                    <label class="custom-checkbox">
+                      <input type="checkbox" id="videoKeepAudio" checked />
+                      <span>Mantener audio original</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-modal-actions">
+                  <button id="btnPreviewVideoClip" class="btn-secondary">Previsualizar Fragmento</button>
+                  <button id="btnSaveEditedVideo" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Guardar Video Recortado</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. SUB-PANEL: EDITOR DE AUDIO (RECORTE / FUNDIDO / EXPORTAR WAV) -->
+          <div id="editorAudioPanel" class="editor-subpanel hidden">
+            <div class="editor-split">
+              <div class="editor-preview-box audio-editor-canvas-wrap">
+                <canvas id="audioEditorWaveform" width="560" height="140"></canvas>
+                <div class="audio-editor-playback-bar">
+                  <button id="btnAudioEditorPlay" class="btn-player-main-sm">▶ Reproducir</button>
+                  <span id="audioEditorCurrentTime" class="time-label">00:00 / 00:00</span>
+                </div>
+              </div>
+
+              <div class="editor-controls-box">
+                <h4>Recortar y Editar Audio</h4>
+                <p class="editor-hint">Define puntos de inicio y final para exportar tu clip de audio.</p>
+
+                <div class="editor-ctrl-group">
+                  <div class="time-inputs-row">
+                    <div class="time-field">
+                      <label>Punto A - Inicio (s)</label>
+                      <input type="number" id="audioTrimStart" min="0" step="0.5" value="0" />
+                      <button id="btnSetAudioStart" class="btn-sub-xs">Marcar Actual</button>
+                    </div>
+                    <div class="time-field">
+                      <label>Punto B - Fin (s)</label>
+                      <input type="number" id="audioTrimEnd" min="0" step="0.5" value="0" />
+                      <button id="btnSetAudioEnd" class="btn-sub-xs">Marcar Actual</button>
+                    </div>
+                  </div>
+                  <div class="duration-readout">
+                    <span>Duración final:</span>
+                    <strong id="audioTrimDuration">00:00</strong>
+                  </div>
+                </div>
+
+                <div class="editor-ctrl-group">
+                  <label>Efectos de Fundido</label>
+                  <div class="checkbox-col">
+                    <label class="custom-checkbox">
+                      <input type="checkbox" id="audioFadeIn" />
+                      <span>Fundido de entrada (Fade In 1.5s)</span>
+                    </label>
+                    <label class="custom-checkbox">
+                      <input type="checkbox" id="audioFadeOut" />
+                      <span>Fundido de salida (Fade Out 1.5s)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-modal-actions">
+                  <button id="btnPreviewAudioClip" class="btn-secondary">Escuchar Fragmento</button>
+                  <button id="btnSaveEditedAudio" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Exportar Audio (.wav)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

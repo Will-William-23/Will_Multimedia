@@ -36,6 +36,26 @@
       "icons/icon.png",
       "icons/icon.ico"
     ],
+    "fileAssociations": [
+      {
+        "ext": ["mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "ts", "3gp"],
+        "name": "Archivo de Video Will Multimedia",
+        "description": "Video reproducible con Will Multimedia",
+        "role": "Viewer"
+      },
+      {
+        "ext": ["mp3", "wav", "flac", "aac", "ogg", "m4a", "wma", "opus", "aiff"],
+        "name": "Archivo de Audio Will Multimedia",
+        "description": "Audio reproducible con Will Multimedia",
+        "role": "Viewer"
+      },
+      {
+        "ext": ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg", "avif", "ico"],
+        "name": "Imagen Will Multimedia",
+        "description": "Imagen visualizable con Will Multimedia",
+        "role": "Viewer"
+      }
+    ],
     "windows": {
       "nsis": {
         "installerIcon": "icons/icon.ico",

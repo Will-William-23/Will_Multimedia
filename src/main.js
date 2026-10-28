@@ -5,7 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 // ============================================================
 const state = {
   streamPort: 45455,
-  currentSection: 'home', // 'home' | 'audio' | 'video'
+  currentSection: 'home', // 'home' | 'audio' | 'video' | 'image'
 
   // Dedicated Queues
   audioPlaylist: [],
@@ -17,6 +17,19 @@ const state = {
   videoFilteredPlaylist: [],
   videoIndex: -1,
   videoFolder: null,
+
+  // Dedicated Images Queue
+  imagePlaylist: [],
+  imageIndex: -1,
+  imageFolder: null,
+  imageZoom: 1.0,
+  imageRotation: 0,
+  imageFlipH: 1,
+  imagePanX: 0,
+  imagePanY: 0,
+  isPanningImage: false,
+  panStartX: 0,
+  panStartY: 0,
 
   // Playback state
   isPlaying: false,
@@ -34,11 +47,30 @@ const state = {
   videoSearchQuery: '',
   videoSortAsc: true,
 
-  lastActiveSection: 'video', // 'video' | 'audio'
+  lastActiveSection: 'video', // 'video' | 'audio' | 'image'
   lastSavedPos: 0,
 
   isTauri: typeof window.__TAURI_INTERNALS__ !== 'undefined',
   cachedSession: null,
+
+  // Editor State
+  activeEditorMode: null, // 'image' | 'video' | 'audio'
+  editorImageCanvas: null,
+  editorImageSource: null,
+  editorCropMode: 'original',
+  editorImgRotation: 0,
+  editorImgFlipH: 1,
+  editorFilters: {
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    grayscale: 0,
+    sepia: 0,
+  },
+  editorAudioBuffer: null,
+  editorAudioCtx: null,
+  editorAudioSourceNode: null,
+  editorAudioIsPlaying: false,
 };
 
 // ============================================================
@@ -51,32 +83,46 @@ const el = {
   headerHome: document.getElementById('headerHome'),
   headerAudio: document.getElementById('headerAudio'),
   headerVideo: document.getElementById('headerVideo'),
+  headerImage: document.getElementById('headerImage'),
   btnShortcuts: document.getElementById('btnShortcuts'),
   btnBackFromAudio: document.getElementById('btnBackFromAudio'),
   btnBackFromVideo: document.getElementById('btnBackFromVideo'),
+  btnBackFromImage: document.getElementById('btnBackFromImage'),
   audioHeaderFolder: document.getElementById('audioHeaderFolder'),
   videoHeaderTitle: document.getElementById('videoHeaderTitle'),
+  imageHeaderTitle: document.getElementById('imageHeaderTitle'),
 
   // Header Actions
   btnAudioOpenFiles: document.getElementById('btnAudioOpenFiles'),
   btnAudioOpenFolder: document.getElementById('btnAudioOpenFolder'),
   btnAudioAddToQueue: document.getElementById('btnAudioAddToQueue'),
+  btnAudioEdit: document.getElementById('btnAudioEdit'),
+
   btnVideoOpenFiles: document.getElementById('btnVideoOpenFiles'),
   btnVideoOpenFolder: document.getElementById('btnVideoOpenFolder'),
   btnVideoAddToQueue: document.getElementById('btnVideoAddToQueue'),
+  btnVideoEdit: document.getElementById('btnVideoEdit'),
+  btnHudVideoEdit: document.getElementById('btnHudVideoEdit'),
   btnVideoQueueToggle: document.getElementById('btnVideoQueueToggle'),
   videoQueueBadge: document.getElementById('videoQueueBadge'),
+
+  btnImageOpenFiles: document.getElementById('btnImageOpenFiles'),
+  btnImageOpenFolder: document.getElementById('btnImageOpenFolder'),
+  btnImageEdit: document.getElementById('btnImageEdit'),
 
   // Views
   homeView: document.getElementById('homeView'),
   audioView: document.getElementById('audioView'),
   videoView: document.getElementById('videoView'),
+  imageView: document.getElementById('imageView'),
 
   // Home Screen Elements
   btnEnterAudio: document.getElementById('btnEnterAudio'),
   btnEnterVideo: document.getElementById('btnEnterVideo'),
+  btnEnterImage: document.getElementById('btnEnterImage'),
   cardEnterAudio: document.getElementById('cardEnterAudio'),
   cardEnterVideo: document.getElementById('cardEnterVideo'),
+  cardEnterImage: document.getElementById('cardEnterImage'),
   resumeBox: document.getElementById('resumeBox'),
   resumeItemTitle: document.getElementById('resumeItemTitle'),
   resumeTimeInfo: document.getElementById('resumeTimeInfo'),
@@ -134,6 +180,25 @@ const el = {
   videoPlaylistSearch: document.getElementById('videoPlaylistSearch'),
   videoPlaylistList: document.getElementById('videoPlaylistList'),
 
+  // Image View Elements
+  btnImagePrev: document.getElementById('btnImagePrev'),
+  btnImageNext: document.getElementById('btnImageNext'),
+  imageCounterBadge: document.getElementById('imageCounterBadge'),
+  btnImageZoomIn: document.getElementById('btnImageZoomIn'),
+  btnImageZoomOut: document.getElementById('btnImageZoomOut'),
+  btnImageResetZoom: document.getElementById('btnImageResetZoom'),
+  imageZoomLabel: document.getElementById('imageZoomLabel'),
+  btnImageRotateLeft: document.getElementById('btnImageRotateLeft'),
+  btnImageRotateRight: document.getElementById('btnImageRotateRight'),
+  btnImageFlipH: document.getElementById('btnImageFlipH'),
+  btnImageStageEdit: document.getElementById('btnImageStageEdit'),
+  imageViewport: document.getElementById('imageViewport'),
+  imageCanvasContainer: document.getElementById('imageCanvasContainer'),
+  mainImageDisplay: document.getElementById('mainImageDisplay'),
+  imageEmptyPlaceholder: document.getElementById('imageEmptyPlaceholder'),
+  imageFilmstripBar: document.getElementById('imageFilmstripBar'),
+  imageFilmstripList: document.getElementById('imageFilmstripList'),
+
   // Bottom Audio Dock Bar
   bottomPlayerBar: document.getElementById('bottomPlayerBar'),
   barCover: document.getElementById('barCover'),
@@ -163,6 +228,58 @@ const el = {
   toastMessage: document.getElementById('toastMessage'),
   shortcutsModal: document.getElementById('shortcutsModal'),
   btnCloseShortcuts: document.getElementById('btnCloseShortcuts'),
+
+  // Editors Modal
+  editorModal: document.getElementById('editorModal'),
+  btnCloseEditorModal: document.getElementById('btnCloseEditorModal'),
+  editorModalTitle: document.getElementById('editorModalTitle'),
+  editorBadgeType: document.getElementById('editorBadgeType'),
+  editorImagePanel: document.getElementById('editorImagePanel'),
+  editorVideoPanel: document.getElementById('editorVideoPanel'),
+  editorAudioPanel: document.getElementById('editorAudioPanel'),
+
+  // Image Editor Controls
+  imageEditorCanvas: document.getElementById('imageEditorCanvas'),
+  btnEditorRotL: document.getElementById('btnEditorRotL'),
+  btnEditorRotR: document.getElementById('btnEditorRotR'),
+  btnEditorFlipH: document.getElementById('btnEditorFlipH'),
+  filterBrightness: document.getElementById('filterBrightness'),
+  filterContrast: document.getElementById('filterContrast'),
+  filterSaturation: document.getElementById('filterSaturation'),
+  filterGrayscale: document.getElementById('filterGrayscale'),
+  filterSepia: document.getElementById('filterSepia'),
+  valBrightness: document.getElementById('valBrightness'),
+  valContrast: document.getElementById('valContrast'),
+  valSaturation: document.getElementById('valSaturation'),
+  valGrayscale: document.getElementById('valGrayscale'),
+  valSepia: document.getElementById('valSepia'),
+  btnResetImageFilter: document.getElementById('btnResetImageFilter'),
+  btnSaveEditedImage: document.getElementById('btnSaveEditedImage'),
+
+  // Video Editor Controls
+  videoEditorPreview: document.getElementById('videoEditorPreview'),
+  videoTrimStart: document.getElementById('videoTrimStart'),
+  videoTrimEnd: document.getElementById('videoTrimEnd'),
+  btnSetVideoStart: document.getElementById('btnSetVideoStart'),
+  btnSetVideoEnd: document.getElementById('btnSetVideoEnd'),
+  videoTrimDuration: document.getElementById('videoTrimDuration'),
+  videoKeepAudio: document.getElementById('videoKeepAudio'),
+  btnPreviewVideoClip: document.getElementById('btnPreviewVideoClip'),
+  btnSaveEditedVideo: document.getElementById('btnSaveEditedVideo'),
+
+  // Audio Editor Controls
+  audioEditorWaveform: document.getElementById('audioEditorWaveform'),
+  btnAudioEditorPlay: document.getElementById('btnAudioEditorPlay'),
+  audioEditorCurrentTime: document.getElementById('audioEditorCurrentTime'),
+  audioTrimStart: document.getElementById('audioTrimStart'),
+  audioTrimEnd: document.getElementById('audioTrimEnd'),
+  btnSetAudioStart: document.getElementById('btnSetAudioStart'),
+  btnSetAudioEnd: document.getElementById('btnSetAudioEnd'),
+  audioTrimDuration: document.getElementById('audioTrimDuration'),
+  audioFadeIn: document.getElementById('audioFadeIn'),
+  audioFadeOut: document.getElementById('audioFadeOut'),
+  btnPreviewAudioClip: document.getElementById('btnPreviewAudioClip'),
+  btnSaveEditedAudio: document.getElementById('btnSaveEditedAudio'),
 };
 
 // ============================================================
@@ -359,10 +476,12 @@ function goToSection(targetSection, loadMedia = true) {
     el.headerHome.classList.remove('hidden');
     el.headerAudio.classList.add('hidden');
     el.headerVideo.classList.add('hidden');
+    el.headerImage.classList.add('hidden');
 
     el.homeView.classList.remove('hidden');
     el.audioView.classList.add('hidden');
     el.videoView.classList.add('hidden');
+    el.imageView.classList.add('hidden');
     el.bottomPlayerBar.classList.add('hidden');
     el.ambientGlow.classList.remove('video-mode');
 
@@ -385,10 +504,12 @@ function goToSection(targetSection, loadMedia = true) {
     el.headerHome.classList.add('hidden');
     el.headerAudio.classList.remove('hidden');
     el.headerVideo.classList.add('hidden');
+    el.headerImage.classList.add('hidden');
 
     el.homeView.classList.add('hidden');
     el.audioView.classList.remove('hidden');
     el.videoView.classList.add('hidden');
+    el.imageView.classList.add('hidden');
     el.bottomPlayerBar.classList.remove('hidden');
     el.ambientGlow.classList.remove('video-mode');
 
@@ -410,10 +531,12 @@ function goToSection(targetSection, loadMedia = true) {
     el.headerHome.classList.add('hidden');
     el.headerAudio.classList.add('hidden');
     el.headerVideo.classList.remove('hidden');
+    el.headerImage.classList.add('hidden');
 
     el.homeView.classList.add('hidden');
     el.audioView.classList.add('hidden');
     el.videoView.classList.remove('hidden');
+    el.imageView.classList.add('hidden');
     el.bottomPlayerBar.classList.add('hidden');
     el.ambientGlow.classList.add('video-mode');
 
@@ -425,6 +548,31 @@ function goToSection(targetSection, loadMedia = true) {
 
     if (state.isPlaying) {
       startVideoAmbient();
+    }
+  } else if (targetSection === 'image') {
+    pauseAudioVisualizer();
+    stopVideoAmbient();
+    el.mainAudioPlayer.pause();
+    el.mainVideoPlayer.pause();
+    setPlayingState(false);
+
+    // Show Image Section
+    el.headerHome.classList.add('hidden');
+    el.headerAudio.classList.add('hidden');
+    el.headerVideo.classList.add('hidden');
+    el.headerImage.classList.remove('hidden');
+
+    el.homeView.classList.add('hidden');
+    el.audioView.classList.add('hidden');
+    el.videoView.classList.add('hidden');
+    el.imageView.classList.remove('hidden');
+    el.bottomPlayerBar.classList.add('hidden');
+    el.ambientGlow.classList.remove('video-mode');
+
+    renderImageFilmstrip();
+
+    if (loadMedia && state.imagePlaylist.length > 0 && state.imageIndex >= 0) {
+      loadImageItem(state.imageIndex);
     }
   }
 
@@ -528,6 +676,9 @@ async function saveSession() {
     videoPlaylist: state.videoPlaylist,
     videoIndex: state.videoIndex,
     videoFolder: state.videoFolder,
+    imagePlaylist: state.imagePlaylist,
+    imageIndex: state.imageIndex,
+    imageFolder: state.imageFolder,
     lastTitle: title,
     playbackPosition: state.playbackPosition,
     volume: state.volume,
@@ -600,10 +751,13 @@ async function loadSession() {
 
       if (data.audioPlaylist) state.audioPlaylist = data.audioPlaylist;
       if (data.videoPlaylist) state.videoPlaylist = data.videoPlaylist;
+      if (data.imagePlaylist) state.imagePlaylist = data.imagePlaylist;
       state.audioIndex = data.audioIndex ?? -1;
       state.videoIndex = data.videoIndex ?? -1;
+      state.imageIndex = data.imageIndex ?? -1;
       state.audioFolder = data.audioFolder;
       state.videoFolder = data.videoFolder;
+      state.imageFolder = data.imageFolder;
       state.playbackPosition = typeof data.playbackPosition === 'number' ? data.playbackPosition : 0;
       state.volume = data.volume ?? 0.9;
       state.isMuted = data.isMuted ?? false;
@@ -1233,12 +1387,681 @@ async function openVideoFolder() {
 }
 
 // ============================================================
+// IMAGE SECTION (VIEWER & GALLERY OPERATIONS)
+// ============================================================
+async function openImageFiles(addToQueue = false) {
+  if (!state.isTauri) return;
+  try {
+    const filePaths = await invoke('open_files_dialog', { filterType: 'image' });
+    if (!filePaths || filePaths.length === 0) return;
+
+    const newItems = [];
+    for (const filePath of filePaths) {
+      const item = await invoke('scan_file', { filePath });
+      newItems.push(item);
+    }
+
+    if (addToQueue) {
+      state.imagePlaylist.push(...newItems);
+      showToast(`Añadidas ${newItems.length} fotos`);
+    } else {
+      state.imageFolder = null;
+      state.imagePlaylist = naturalSortItems(newItems, true);
+      loadImageItem(0);
+      showToast(`Cargadas ${newItems.length} imágenes`);
+    }
+
+    renderImageFilmstrip();
+  } catch (err) {
+    console.error(err);
+    showToast(`Error: ${err}`);
+  }
+}
+
+async function openImageFolder() {
+  if (!state.isTauri) return;
+  try {
+    const folderPath = await invoke('open_folder_dialog');
+    if (!folderPath) return;
+
+    state.imageFolder = folderPath;
+    const items = await invoke('scan_folder', {
+      folderPath,
+      mediaType: 'image',
+    });
+
+    if (items.length === 0) {
+      showToast('No se encontraron imágenes en esa carpeta');
+      return;
+    }
+
+    state.imagePlaylist = naturalSortItems(items, true);
+    renderImageFilmstrip();
+    loadImageItem(0);
+    showToast(`Cargadas ${items.length} imágenes ordenadas naturalmente`);
+  } catch (err) {
+    console.error(err);
+    showToast(`Error: ${err}`);
+  }
+}
+
+function loadImageItem(index) {
+  if (index < 0 || index >= state.imagePlaylist.length) return;
+
+  state.imageIndex = index;
+  const item = state.imagePlaylist[index];
+  const streamUrl = getMediaStreamUrl(item.path);
+
+  el.mainImageDisplay.src = streamUrl;
+  el.mainImageDisplay.classList.remove('hidden');
+  el.imageEmptyPlaceholder.classList.add('hidden');
+
+  el.imageHeaderTitle.textContent = item.name;
+  el.imageCounterBadge.textContent = `${index + 1} / ${state.imagePlaylist.length}`;
+
+  // Reset viewport transforms
+  state.imageZoom = 1.0;
+  state.imageRotation = 0;
+  state.imageFlipH = 1;
+  state.imagePanX = 0;
+  state.imagePanY = 0;
+  updateImageTransform();
+
+  // Highlight active thumb in filmstrip
+  const thumbs = el.imageFilmstripList.querySelectorAll('.filmstrip-thumb');
+  thumbs.forEach((th, idx) => {
+    th.classList.toggle('active', idx === index);
+    if (idx === index) {
+      th.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  });
+
+  saveSession();
+}
+
+function updateImageTransform() {
+  el.imageCanvasContainer.style.transform = `translate(${state.imagePanX}px, ${state.imagePanY}px) scale(${state.imageZoom}) rotate(${state.imageRotation}deg) scaleX(${state.imageFlipH})`;
+  el.imageZoomLabel.textContent = `${Math.round(state.imageZoom * 100)}%`;
+}
+
+function renderImageFilmstrip() {
+  el.imageFilmstripList.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  state.imagePlaylist.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.className = `filmstrip-thumb ${index === state.imageIndex ? 'active' : ''}`;
+    div.title = item.name;
+    const img = document.createElement('img');
+    img.src = getMediaStreamUrl(item.path);
+    img.loading = 'lazy';
+    img.draggable = false;
+    div.appendChild(img);
+
+    div.addEventListener('click', () => {
+      loadImageItem(index);
+    });
+
+    fragment.appendChild(div);
+  });
+
+  el.imageFilmstripList.appendChild(fragment);
+}
+
+function prevImage() {
+  if (state.imagePlaylist.length === 0) return;
+  const newIndex = (state.imageIndex - 1 + state.imagePlaylist.length) % state.imagePlaylist.length;
+  loadImageItem(newIndex);
+}
+
+function nextImage() {
+  if (state.imagePlaylist.length === 0) return;
+  const newIndex = (state.imageIndex + 1) % state.imagePlaylist.length;
+  loadImageItem(newIndex);
+}
+
+async function handleOpenFileFromLaunch(launchPath) {
+  if (!launchPath) return;
+  try {
+    const item = await invoke('scan_file', { filePath: launchPath });
+    if (!item) return;
+
+    if (item.media_type === 'image') {
+      state.imagePlaylist = [item];
+      goToSection('image');
+      loadImageItem(0);
+      showToast(`Abriendo imagen: ${item.name}`);
+    } else if (item.media_type === 'video') {
+      state.videoPlaylist = [item];
+      goToSection('video');
+      loadVideoItem(0, true);
+      showToast(`Abriendo video: ${item.name}`);
+    } else if (item.media_type === 'audio') {
+      state.audioPlaylist = [item];
+      goToSection('audio');
+      loadAudioItem(0, true);
+      showToast(`Abriendo audio: ${item.name}`);
+    }
+  } catch (err) {
+    console.warn('Error al procesar archivo de inicio:', err);
+  }
+}
+
+// ============================================================
+// MULTIMEDIA EDITORS (IMAGE, VIDEO, AUDIO)
+// ============================================================
+function openEditorModal(mode) {
+  state.activeEditorMode = mode;
+  el.editorModal.classList.remove('hidden');
+
+  el.editorImagePanel.classList.add('hidden');
+  el.editorVideoPanel.classList.add('hidden');
+  el.editorAudioPanel.classList.add('hidden');
+
+  if (mode === 'image') {
+    el.editorModalTitle.textContent = 'Editor de Imagen y Fotografía';
+    el.editorBadgeType.textContent = 'FOTOS';
+    el.editorImagePanel.classList.remove('hidden');
+    initImageEditor();
+  } else if (mode === 'video') {
+    el.editorModalTitle.textContent = 'Editor y Recorte de Video';
+    el.editorBadgeType.textContent = 'VIDEO';
+    el.editorVideoPanel.classList.remove('hidden');
+    initVideoEditor();
+  } else if (mode === 'audio') {
+    el.editorModalTitle.textContent = 'Editor y Corte de Audio';
+    el.editorBadgeType.textContent = 'AUDIO';
+    el.editorAudioPanel.classList.remove('hidden');
+    initAudioEditor();
+  }
+}
+
+function closeEditorModal() {
+  el.editorModal.classList.add('hidden');
+  if (state.activeEditorMode === 'video' && el.videoEditorPreview) {
+    el.videoEditorPreview.pause();
+  }
+  if (state.activeEditorMode === 'audio' && state.editorAudioSourceNode) {
+    try { state.editorAudioSourceNode.stop(); } catch (e) {}
+    state.editorAudioIsPlaying = false;
+  }
+  state.activeEditorMode = null;
+}
+
+// 1. IMAGE EDITOR
+function initImageEditor() {
+  const currentItem = state.imagePlaylist[state.imageIndex];
+  if (!currentItem) {
+    showToast('Abre una foto antes de editar');
+    closeEditorModal();
+    return;
+  }
+
+  // Reset filters
+  state.editorCropMode = 'original';
+  state.editorImgRotation = 0;
+  state.editorImgFlipH = 1;
+  state.editorFilters = {
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    grayscale: 0,
+    sepia: 0,
+  };
+
+  el.filterBrightness.value = 100;
+  el.filterContrast.value = 100;
+  el.filterSaturation.value = 100;
+  el.filterGrayscale.value = 0;
+  el.filterSepia.value = 0;
+  updateFilterLabels();
+
+  // Reset active crop button
+  document.querySelectorAll('#editorImagePanel [data-crop]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.crop === 'original');
+  });
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    state.editorImageSource = img;
+    renderImageEditorCanvas();
+  };
+  img.src = getMediaStreamUrl(currentItem.path);
+}
+
+function updateFilterLabels() {
+  el.valBrightness.textContent = `${el.filterBrightness.value}%`;
+  el.valContrast.textContent = `${el.filterContrast.value}%`;
+  el.valSaturation.textContent = `${el.filterSaturation.value}%`;
+  el.valGrayscale.textContent = `${el.filterGrayscale.value}%`;
+  el.valSepia.textContent = `${el.filterSepia.value}%`;
+}
+
+function renderImageEditorCanvas() {
+  const img = state.editorImageSource;
+  if (!img) return;
+
+  const canvas = el.imageEditorCanvas;
+  const ctx = canvas.getContext('2d');
+
+  let sX = 0, sY = 0, sW = img.naturalWidth, sH = img.naturalHeight;
+
+  // Aspect ratio crop calculation
+  if (state.editorCropMode === '1:1') {
+    const size = Math.min(sW, sH);
+    sX = (sW - size) / 2;
+    sY = (sH - size) / 2;
+    sW = size;
+    sH = size;
+  } else if (state.editorCropMode === '4:3') {
+    let targetW = sW;
+    let targetH = sW * (3 / 4);
+    if (targetH > sH) {
+      targetH = sH;
+      targetW = sH * (4 / 3);
+    }
+    sX = (sW - targetW) / 2;
+    sY = (sH - targetH) / 2;
+    sW = targetW;
+    sH = targetH;
+  } else if (state.editorCropMode === '16:9') {
+    let targetW = sW;
+    let targetH = sW * (9 / 16);
+    if (targetH > sH) {
+      targetH = sH;
+      targetW = sH * (16 / 9);
+    }
+    sX = (sW - targetW) / 2;
+    sY = (sH - targetH) / 2;
+    sW = targetW;
+    sH = targetH;
+  }
+
+  const isRotated90or270 = state.editorImgRotation === 90 || state.editorImgRotation === 270;
+  canvas.width = isRotated90or270 ? sH : sW;
+  canvas.height = isRotated90or270 ? sW : sH;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+
+  // Apply filters
+  const f = state.editorFilters;
+  ctx.filter = `brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturation}%) grayscale(${f.grayscale}%) sepia(${f.sepia}%)`;
+
+  // Center and rotate
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate((state.editorImgRotation * Math.PI) / 180);
+  ctx.scale(state.editorImgFlipH, 1);
+
+  ctx.drawImage(img, sX, sY, sW, sH, -sW / 2, -sH / 2, sW, sH);
+  ctx.restore();
+}
+
+async function saveEditedImage() {
+  const canvas = el.imageEditorCanvas;
+  if (!canvas || canvas.width === 0) return;
+
+  const currentItem = state.imagePlaylist[state.imageIndex];
+  const baseName = currentItem ? currentItem.name.replace(/\.[^/.]+$/, "") : "foto";
+  const defaultName = `${baseName}_editada.png`;
+
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64Data = dataUrl.split(',')[1];
+
+    const savedPath = await invoke('save_binary_file', {
+      defaultName,
+      base64Data,
+      filterType: 'image',
+    });
+
+    if (savedPath) {
+      showToast(`Imagen guardada: ${savedPath}`);
+      closeEditorModal();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast(`Error guardando imagen: ${err}`);
+  }
+}
+
+// 2. VIDEO EDITOR
+function initVideoEditor() {
+  const currentItem = state.videoPlaylist[state.videoIndex];
+  if (!currentItem) {
+    showToast('Abre un video antes de recortar');
+    closeEditorModal();
+    return;
+  }
+
+  const preview = el.videoEditorPreview;
+  preview.src = getMediaStreamUrl(currentItem.path);
+
+  preview.onloadedmetadata = () => {
+    const dur = Math.round(preview.duration * 10) / 10;
+    el.videoTrimStart.value = 0;
+    el.videoTrimEnd.value = dur;
+    updateVideoTrimDuration();
+  };
+}
+
+function updateVideoTrimDuration() {
+  const start = parseFloat(el.videoTrimStart.value) || 0;
+  const end = parseFloat(el.videoTrimEnd.value) || 0;
+  const diff = Math.max(0, end - start);
+  el.videoTrimDuration.textContent = formatTime(diff);
+}
+
+function previewVideoSegment() {
+  const preview = el.videoEditorPreview;
+  const start = parseFloat(el.videoTrimStart.value) || 0;
+  const end = parseFloat(el.videoTrimEnd.value) || preview.duration;
+
+  preview.currentTime = start;
+  preview.play();
+
+  const checkEnd = () => {
+    if (preview.currentTime >= end) {
+      preview.pause();
+      preview.removeEventListener('timeupdate', checkEnd);
+    }
+  };
+  preview.addEventListener('timeupdate', checkEnd);
+}
+
+async function saveEditedVideo() {
+  const currentItem = state.videoPlaylist[state.videoIndex];
+  if (!currentItem) return;
+
+  const start = parseFloat(el.videoTrimStart.value) || 0;
+  const end = parseFloat(el.videoTrimEnd.value) || el.videoEditorPreview.duration;
+
+  if (end <= start) {
+    showToast('El punto final debe ser mayor que el inicial');
+    return;
+  }
+
+  showToast('Grabando fragmento en alta calidad...');
+  const preview = el.videoEditorPreview;
+
+  try {
+    const stream = preview.captureStream ? preview.captureStream() : preview.mozCaptureStream();
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    const chunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = reader.result.split(',')[1];
+        const defaultName = `${currentItem.name.replace(/\.[^/.]+$/, "")}_clip.webm`;
+        try {
+          const saved = await invoke('save_binary_file', {
+            defaultName,
+            base64Data,
+            filterType: 'video',
+          });
+          if (saved) {
+            showToast('Video recortado guardado exitosamente');
+            closeEditorModal();
+          }
+        } catch (err) {
+          showToast(`Error: ${err}`);
+        }
+      };
+      reader.readAsDataURL(blob);
+    };
+
+    preview.currentTime = start;
+    preview.muted = !el.videoKeepAudio.checked;
+    await preview.play();
+    mediaRecorder.start();
+
+    const durationMs = (end - start) * 1000;
+    setTimeout(() => {
+      mediaRecorder.stop();
+      preview.pause();
+    }, durationMs);
+
+  } catch (err) {
+    console.warn(err);
+    showToast('Formato de captura no compatible en este sistema');
+  }
+}
+
+// 3. AUDIO EDITOR
+async function initAudioEditor() {
+  const currentItem = state.audioPlaylist[state.audioIndex];
+  if (!currentItem) {
+    showToast('Abre una pista de audio antes de recortar');
+    closeEditorModal();
+    return;
+  }
+
+  showToast('Cargando y analizando audio...');
+
+  try {
+    const response = await fetch(getMediaStreamUrl(currentItem.path));
+    const arrayBuffer = await response.arrayBuffer();
+
+    if (!state.editorAudioCtx) {
+      state.editorAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    state.editorAudioBuffer = await state.editorAudioCtx.decodeAudioData(arrayBuffer);
+    const dur = Math.round(state.editorAudioBuffer.duration * 10) / 10;
+
+    el.audioTrimStart.value = 0;
+    el.audioTrimEnd.value = dur;
+    updateAudioTrimDuration();
+
+    drawAudioWaveform(state.editorAudioBuffer);
+    showToast('Audio listo para edición');
+  } catch (err) {
+    console.error(err);
+    showToast(`Error decodificando audio: ${err}`);
+  }
+}
+
+function updateAudioTrimDuration() {
+  const start = parseFloat(el.audioTrimStart.value) || 0;
+  const end = parseFloat(el.audioTrimEnd.value) || 0;
+  const diff = Math.max(0, end - start);
+  el.audioTrimDuration.textContent = formatTime(diff);
+}
+
+function drawAudioWaveform(buffer) {
+  const canvas = el.audioEditorWaveform;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const rawData = buffer.getChannelData(0);
+  const step = Math.ceil(rawData.length / width);
+  const amp = height / 2;
+
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.7)';
+
+  for (let i = 0; i < width; i++) {
+    let min = 1.0;
+    let max = -1.0;
+    for (let j = 0; j < step; j++) {
+      const datum = rawData[(i * step) + j];
+      if (datum < min) min = datum;
+      if (datum > max) max = datum;
+    }
+    ctx.fillRect(i, (1 + min) * amp, 1, Math.max(2, (max - min) * amp));
+  }
+}
+
+function previewAudioSegment() {
+  if (!state.editorAudioBuffer || !state.editorAudioCtx) return;
+
+  if (state.editorAudioIsPlaying && state.editorAudioSourceNode) {
+    try { state.editorAudioSourceNode.stop(); } catch (e) {}
+    state.editorAudioIsPlaying = false;
+    el.btnAudioEditorPlay.textContent = '▶ Reproducir';
+    return;
+  }
+
+  const start = parseFloat(el.audioTrimStart.value) || 0;
+  const end = parseFloat(el.audioTrimEnd.value) || state.editorAudioBuffer.duration;
+  const duration = Math.max(0.1, end - start);
+
+  const source = state.editorAudioCtx.createBufferSource();
+  source.buffer = state.editorAudioBuffer;
+  source.connect(state.editorAudioCtx.destination);
+  source.start(0, start, duration);
+
+  state.editorAudioSourceNode = source;
+  state.editorAudioIsPlaying = true;
+  el.btnAudioEditorPlay.textContent = '⏹ Detener';
+
+  source.onended = () => {
+    state.editorAudioIsPlaying = false;
+    el.btnAudioEditorPlay.textContent = '▶ Reproducir';
+  };
+}
+
+async function saveEditedAudio() {
+  if (!state.editorAudioBuffer) {
+    showToast('No hay datos de audio cargados');
+    return;
+  }
+
+  const currentItem = state.audioPlaylist[state.audioIndex];
+  const start = parseFloat(el.audioTrimStart.value) || 0;
+  const end = parseFloat(el.audioTrimEnd.value) || state.editorAudioBuffer.duration;
+
+  if (end <= start) {
+    showToast('El punto B (fin) debe ser mayor que el punto A (inicio)');
+    return;
+  }
+
+  showToast('Generando archivo WAV...');
+
+  try {
+    const wavBuffer = encodeWAV(
+      state.editorAudioBuffer,
+      start,
+      end,
+      el.audioFadeIn.checked,
+      el.audioFadeOut.checked
+    );
+
+    const base64Data = arrayBufferToBase64(wavBuffer);
+    const defaultName = `${currentItem ? currentItem.title || currentItem.name : 'audio'}_corte.wav`;
+
+    const saved = await invoke('save_binary_file', {
+      defaultName,
+      base64Data,
+      filterType: 'audio',
+    });
+
+    if (saved) {
+      showToast('Audio exportado y guardado correctamente');
+      closeEditorModal();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast(`Error exportando audio: ${err}`);
+  }
+}
+
+// 16-bit PCM WAV Encoder in Pure JS
+function encodeWAV(audioBuffer, startSec, endSec, applyFadeIn, applyFadeOut) {
+  const sampleRate = audioBuffer.sampleRate;
+  const numChannels = audioBuffer.numberOfChannels;
+  const startSample = Math.max(0, Math.floor(startSec * sampleRate));
+  const endSample = Math.min(audioBuffer.length, Math.floor(endSec * sampleRate));
+  const numSamples = Math.max(0, endSample - startSample);
+
+  const blockAlign = numChannels * 2;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = numSamples * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  // RIFF identifier
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(view, 8, 'WAVE');
+  // format chunk
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true); // 16-bit
+  // data chunk
+  writeString(view, 36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  const channels = [];
+  for (let ch = 0; ch < numChannels; ch++) {
+    channels.push(audioBuffer.getChannelData(ch));
+  }
+
+  const fadeInSamples = Math.min(numSamples / 2, sampleRate * 1.5);
+  const fadeOutSamples = Math.min(numSamples / 2, sampleRate * 1.5);
+
+  let offset = 44;
+  for (let i = 0; i < numSamples; i++) {
+    let fade = 1.0;
+    if (applyFadeIn && i < fadeInSamples) {
+      fade *= i / fadeInSamples;
+    }
+    if (applyFadeOut && i > (numSamples - fadeOutSamples)) {
+      fade *= (numSamples - i) / fadeOutSamples;
+    }
+
+    for (let ch = 0; ch < numChannels; ch++) {
+      const sample = Math.max(-1, Math.min(1, channels[ch][startSample + i] * fade));
+      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(offset, intSample, true);
+      offset += 2;
+    }
+  }
+
+  return buffer;
+}
+
+function writeString(view, offset, string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  const chunkSize = 8192;
+  for (let i = 0; i < len; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+}
+
+// ============================================================
 // EVENT LISTENERS & SETUP
 // ============================================================
 function initEventListeners() {
   // Navigation from Home
   el.btnEnterAudio.addEventListener('click', () => goToSection('audio'));
   el.btnEnterVideo.addEventListener('click', () => goToSection('video'));
+  el.btnEnterImage.addEventListener('click', () => goToSection('image'));
   el.cardEnterAudio.addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
     goToSection('audio');
@@ -1247,10 +2070,15 @@ function initEventListeners() {
     if (e.target.closest('button')) return;
     goToSection('video');
   });
+  el.cardEnterImage.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    goToSection('image');
+  });
 
   // Back to Home
   el.btnBackFromAudio.addEventListener('click', () => goToSection('home'));
   el.btnBackFromVideo.addEventListener('click', () => goToSection('home'));
+  el.btnBackFromImage.addEventListener('click', () => goToSection('home'));
 
   // Resume Session from Home
   el.btnResumeSession.addEventListener('click', restoreSession);
@@ -1259,6 +2087,7 @@ function initEventListeners() {
   el.btnAudioOpenFiles.addEventListener('click', () => openAudioFiles(false));
   el.btnAudioOpenFolder.addEventListener('click', openAudioFolder);
   el.btnAudioAddToQueue.addEventListener('click', () => openAudioFiles(true));
+  el.btnAudioEdit.addEventListener('click', () => openEditorModal('audio'));
   el.btnClearAudioPlaylist.addEventListener('click', () => {
     state.audioPlaylist = [];
     state.audioIndex = -1;
@@ -1278,6 +2107,10 @@ function initEventListeners() {
   el.btnVideoOpenFiles.addEventListener('click', () => openVideoFiles(false));
   el.btnVideoOpenFolder.addEventListener('click', openVideoFolder);
   el.btnVideoAddToQueue.addEventListener('click', () => openVideoFiles(true));
+  el.btnVideoEdit.addEventListener('click', () => openEditorModal('video'));
+  if (el.btnHudVideoEdit) {
+    el.btnHudVideoEdit.addEventListener('click', () => openEditorModal('video'));
+  }
   el.btnVideoQueueToggle.addEventListener('click', () => {
     el.videoPlaylistDrawer.classList.toggle('hidden');
   });
@@ -1297,6 +2130,70 @@ function initEventListeners() {
     state.videoPlaylist = naturalSortItems(state.videoPlaylist, state.videoSortAsc);
     renderVideoPlaylist();
     showToast(state.videoSortAsc ? 'Orden Natural (1, 2, 3...)' : 'Orden Invertido');
+  });
+
+  // Image Section Actions
+  el.btnImageOpenFiles.addEventListener('click', () => openImageFiles(false));
+  el.btnImageOpenFolder.addEventListener('click', openImageFolder);
+  el.btnImageEdit.addEventListener('click', () => openEditorModal('image'));
+  el.btnImageStageEdit.addEventListener('click', () => openEditorModal('image'));
+  el.btnImagePrev.addEventListener('click', prevImage);
+  el.btnImageNext.addEventListener('click', nextImage);
+  el.btnImageZoomIn.addEventListener('click', () => {
+    state.imageZoom = Math.min(8, state.imageZoom * 1.25);
+    updateImageTransform();
+  });
+  el.btnImageZoomOut.addEventListener('click', () => {
+    state.imageZoom = Math.max(0.2, state.imageZoom / 1.25);
+    updateImageTransform();
+  });
+  el.btnImageResetZoom.addEventListener('click', () => {
+    state.imageZoom = 1.0;
+    state.imageRotation = 0;
+    state.imageFlipH = 1;
+    state.imagePanX = 0;
+    state.imagePanY = 0;
+    updateImageTransform();
+  });
+  el.btnImageRotateLeft.addEventListener('click', () => {
+    state.imageRotation = (state.imageRotation - 90 + 360) % 360;
+    updateImageTransform();
+  });
+  el.btnImageRotateRight.addEventListener('click', () => {
+    state.imageRotation = (state.imageRotation + 90) % 360;
+    updateImageTransform();
+  });
+  el.btnImageFlipH.addEventListener('click', () => {
+    state.imageFlipH *= -1;
+    updateImageTransform();
+  });
+
+  // Image Viewport Mouse Pan & Wheel Zoom
+  el.imageViewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 0.85;
+    state.imageZoom = Math.max(0.2, Math.min(8, state.imageZoom * factor));
+    updateImageTransform();
+  }, { passive: false });
+
+  el.imageViewport.addEventListener('mousedown', (e) => {
+    if (e.button === 0) {
+      state.isPanningImage = true;
+      state.panStartX = e.clientX - state.imagePanX;
+      state.panStartY = e.clientY - state.imagePanY;
+    }
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (state.isPanningImage) {
+      state.imagePanX = e.clientX - state.panStartX;
+      state.imagePanY = e.clientY - state.panStartY;
+      updateImageTransform();
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    state.isPanningImage = false;
   });
 
   // Search Filters
@@ -1472,6 +2369,101 @@ function initEventListeners() {
     if (e.target === el.shortcutsModal) el.shortcutsModal.classList.add('hidden');
   });
 
+  // Editor Modal Events
+  el.btnCloseEditorModal.addEventListener('click', closeEditorModal);
+  el.editorModal.addEventListener('click', (e) => {
+    if (e.target === el.editorModal) closeEditorModal();
+  });
+
+  // Image Editor Handlers
+  document.querySelectorAll('#editorImagePanel [data-crop]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#editorImagePanel [data-crop]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.editorCropMode = btn.dataset.crop;
+      renderImageEditorCanvas();
+    });
+  });
+
+  el.btnEditorRotL.addEventListener('click', () => {
+    state.editorImgRotation = (state.editorImgRotation - 90 + 360) % 360;
+    renderImageEditorCanvas();
+  });
+  el.btnEditorRotR.addEventListener('click', () => {
+    state.editorImgRotation = (state.editorImgRotation + 90) % 360;
+    renderImageEditorCanvas();
+  });
+  el.btnEditorFlipH.addEventListener('click', () => {
+    state.editorImgFlipH *= -1;
+    renderImageEditorCanvas();
+  });
+
+  [el.filterBrightness, el.filterContrast, el.filterSaturation, el.filterGrayscale, el.filterSepia].forEach(slider => {
+    slider.addEventListener('input', () => {
+      state.editorFilters.brightness = parseInt(el.filterBrightness.value);
+      state.editorFilters.contrast = parseInt(el.filterContrast.value);
+      state.editorFilters.saturation = parseInt(el.filterSaturation.value);
+      state.editorFilters.grayscale = parseInt(el.filterGrayscale.value);
+      state.editorFilters.sepia = parseInt(el.filterSepia.value);
+      updateFilterLabels();
+      renderImageEditorCanvas();
+    });
+  });
+
+  el.btnResetImageFilter.addEventListener('click', () => {
+    el.filterBrightness.value = 100;
+    el.filterContrast.value = 100;
+    el.filterSaturation.value = 100;
+    el.filterGrayscale.value = 0;
+    el.filterSepia.value = 0;
+    state.editorImgRotation = 0;
+    state.editorImgFlipH = 1;
+    state.editorCropMode = 'original';
+    document.querySelectorAll('#editorImagePanel [data-crop]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.crop === 'original');
+    });
+    updateFilterLabels();
+    renderImageEditorCanvas();
+  });
+
+  el.btnSaveEditedImage.addEventListener('click', saveEditedImage);
+
+  // Video Editor Handlers
+  el.btnSetVideoStart.addEventListener('click', () => {
+    el.videoTrimStart.value = Math.round(el.videoEditorPreview.currentTime * 10) / 10;
+    updateVideoTrimDuration();
+  });
+  el.btnSetVideoEnd.addEventListener('click', () => {
+    el.videoTrimEnd.value = Math.round(el.videoEditorPreview.currentTime * 10) / 10;
+    updateVideoTrimDuration();
+  });
+  el.videoTrimStart.addEventListener('input', updateVideoTrimDuration);
+  el.videoTrimEnd.addEventListener('input', updateVideoTrimDuration);
+  document.querySelectorAll('#editorVideoPanel [data-vspeed]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#editorVideoPanel [data-vspeed]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      el.videoEditorPreview.playbackRate = parseFloat(btn.dataset.vspeed);
+    });
+  });
+  el.btnPreviewVideoClip.addEventListener('click', previewVideoSegment);
+  el.btnSaveEditedVideo.addEventListener('click', saveEditedVideo);
+
+  // Audio Editor Handlers
+  el.btnSetAudioStart.addEventListener('click', () => {
+    el.audioTrimStart.value = Math.round((state.playbackPosition || 0) * 10) / 10;
+    updateAudioTrimDuration();
+  });
+  el.btnSetAudioEnd.addEventListener('click', () => {
+    el.audioTrimEnd.value = Math.round((state.playbackPosition || 0) * 10) / 10;
+    updateAudioTrimDuration();
+  });
+  el.audioTrimStart.addEventListener('input', updateAudioTrimDuration);
+  el.audioTrimEnd.addEventListener('input', updateAudioTrimDuration);
+  el.btnAudioEditorPlay.addEventListener('click', previewAudioSegment);
+  el.btnPreviewAudioClip.addEventListener('click', previewAudioSegment);
+  el.btnSaveEditedAudio.addEventListener('click', saveEditedAudio);
+
   window.addEventListener('keydown', handleKeyboardShortcuts);
 }
 
@@ -1542,11 +2534,19 @@ function handleKeyboardShortcuts(e) {
       break;
     case 'ArrowRight':
       e.preventDefault();
-      seekRelative(e.shiftKey ? 10 : 5);
+      if (state.currentSection === 'image') {
+        nextImage();
+      } else {
+        seekRelative(e.shiftKey ? 10 : 5);
+      }
       break;
     case 'ArrowLeft':
       e.preventDefault();
-      seekRelative(e.shiftKey ? -10 : -5);
+      if (state.currentSection === 'image') {
+        prevImage();
+      } else {
+        seekRelative(e.shiftKey ? -10 : -5);
+      }
       break;
     case 'ArrowUp':
       e.preventDefault();
@@ -1563,10 +2563,12 @@ function handleKeyboardShortcuts(e) {
       if (state.currentSection === 'video') toggleFullscreen();
       break;
     case 'KeyN':
-      playNext();
+      if (state.currentSection === 'image') nextImage();
+      else playNext();
       break;
     case 'KeyP':
-      playPrev();
+      if (state.currentSection === 'image') prevImage();
+      else playPrev();
       break;
     case 'KeyL':
       cycleRepeat();
@@ -1577,6 +2579,7 @@ function handleKeyboardShortcuts(e) {
     case 'Escape':
       el.shortcutsModal.classList.add('hidden');
       el.videoPlaylistDrawer.classList.add('hidden');
+      closeEditorModal();
       break;
   }
 }
@@ -1587,13 +2590,29 @@ function handleKeyboardShortcuts(e) {
 async function init() {
   initEventListeners();
 
-
   if (state.isTauri) {
     try {
       const port = await invoke('get_stream_port');
       if (port) state.streamPort = port;
     } catch (e) {
       console.warn('Error obteniendo puerto:', e);
+    }
+
+    // Auto-register file associations for Windows Open With / Default Apps
+    try {
+      invoke('register_windows_associations').catch(err => console.warn('Reg assoc error:', err));
+    } catch (e) {
+      console.warn('Error registrando asociaciones:', e);
+    }
+
+    // Check if app was launched with a file argument ("Abrir con..." or double click)
+    try {
+      const launchPath = await invoke('get_launch_file');
+      if (launchPath) {
+        await handleOpenFileFromLaunch(launchPath);
+      }
+    } catch (e) {
+      console.warn('Error con launch file:', e);
     }
   }
 
@@ -1624,3 +2643,4 @@ async function init() {
 }
 
 window.addEventListener('DOMContentLoaded', init);
+

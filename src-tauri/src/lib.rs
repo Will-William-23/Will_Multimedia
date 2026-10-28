@@ -16,6 +16,10 @@ const VIDEO_EXTENSIONS: &[&str] = &[
     "mp4", "mkv", "webm", "avi", "mov", "flv", "wmv", "m4v", "ts", "3gp", "ogv", "vob"
 ];
 
+const IMAGE_EXTENSIONS: &[&str] = &[
+    "jpg", "jpeg", "png", "webp", "gif", "bmp", "svg", "avif", "ico"
+];
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct MediaItem {
     pub id: String,
@@ -51,6 +55,10 @@ fn is_audio_ext(ext: &str) -> bool {
 
 fn is_video_ext(ext: &str) -> bool {
     VIDEO_EXTENSIONS.contains(&ext)
+}
+
+fn is_image_ext(ext: &str) -> bool {
+    IMAGE_EXTENSIONS.contains(&ext)
 }
 
 /// Natural sorting comparison (e.g. "1.mp4", "2.mp4", "10.mp4")
@@ -226,11 +234,21 @@ fn handle_stream_request(request: tiny_http::Request) {
             "ts" => "video/mp2t",
             "3gp" => "video/3gpp",
             "ogv" => "video/ogg",
+            "jpg" | "jpeg" => "image/jpeg",
+            "png" => "image/png",
+            "webp" => "image/webp",
+            "gif" => "image/gif",
+            "bmp" => "image/bmp",
+            "svg" => "image/svg+xml",
+            "avif" => "image/avif",
+            "ico" => "image/x-icon",
             _ => {
                 if is_audio_ext(&ext) {
                     "audio/mpeg"
                 } else if is_video_ext(&ext) {
                     "video/mp4"
+                } else if is_image_ext(&ext) {
+                    "image/jpeg"
                 } else {
                     "application/octet-stream"
                 }
@@ -357,10 +375,16 @@ fn open_files_dialog(filter_type: String) -> Result<Vec<String>, String> {
                 .add_filter("Videos (*.mp4, *.mkv, *.webm, *.avi, *.mov, *.wmv)", VIDEO_EXTENSIONS)
                 .add_filter("Todos los archivos (*.*)", &["*"]);
         }
+        "image" => {
+            dialog = dialog
+                .add_filter("Imágenes (*.jpg, *.png, *.webp, *.gif, *.bmp, *.svg, *.avif)", IMAGE_EXTENSIONS)
+                .add_filter("Todos los archivos (*.*)", &["*"]);
+        }
         _ => {
             let mut all_exts = Vec::new();
             all_exts.extend_from_slice(AUDIO_EXTENSIONS);
             all_exts.extend_from_slice(VIDEO_EXTENSIONS);
+            all_exts.extend_from_slice(IMAGE_EXTENSIONS);
             dialog = dialog
                 .add_filter("Multimedia", &all_exts)
                 .add_filter("Todos los archivos (*.*)", &["*"]);
@@ -398,11 +422,13 @@ fn scan_folder(folder_path: String, media_type: String) -> Result<Vec<MediaItem>
             let ext = entry_path.extension().and_then(|s| s.to_str()).unwrap_or("").to_lowercase();
             let is_audio = is_audio_ext(&ext);
             let is_video = is_video_ext(&ext);
+            let is_image = is_image_ext(&ext);
 
             let matches = match media_type.as_str() {
                 "audio" => is_audio,
                 "video" => is_video,
-                _ => is_audio || is_video,
+                "image" => is_image,
+                _ => is_audio || is_video || is_image,
             };
 
             if matches {
@@ -412,7 +438,13 @@ fn scan_folder(folder_path: String, media_type: String) -> Result<Vec<MediaItem>
                 let size_formatted = format_file_size(size);
                 let path_str = entry_path.to_string_lossy().to_string();
                 let id = format!("{:x}", md5_hash(&path_str));
-                let resolved_type = if is_audio { "audio" } else { "video" }.to_string();
+                let resolved_type = if is_audio {
+                    "audio"
+                } else if is_video {
+                    "video"
+                } else {
+                    "image"
+                }.to_string();
 
                 items.push(MediaItem {
                     id,
@@ -448,7 +480,15 @@ fn scan_file(file_path: String) -> Result<MediaItem, String> {
     let size_formatted = format_file_size(size);
     let path_str = path.to_string_lossy().to_string();
     let id = format!("{:x}", md5_hash(&path_str));
-    let resolved_type = if is_audio_ext(&ext) { "audio" } else { "video" }.to_string();
+    let resolved_type = if is_audio_ext(&ext) {
+        "audio"
+    } else if is_video_ext(&ext) {
+        "video"
+    } else if is_image_ext(&ext) {
+        "image"
+    } else {
+        "unknown"
+    }.to_string();
 
     Ok(MediaItem {
         id,
@@ -575,8 +615,112 @@ pub fn run() {
             scan_file,
             save_cache,
             load_cache,
-            trim_memory
+            trim_memory,
+            get_launch_file,
+            save_binary_file,
+            register_windows_associations
         ])
         .run(tauri::generate_context!())
         .expect("error while running will multimedia player");
+}
+
+fn decode_base64(input: &str) -> Option<Vec<u8>> {
+    let mut table = [255u8; 256];
+    const B64_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    for (i, &b) in B64_CHARS.iter().enumerate() {
+        table[b as usize] = i as u8;
+    }
+    let mut out = Vec::new();
+    let mut buf = 0u32;
+    let mut bits = 0;
+    for &b in input.as_bytes() {
+        if b == b'=' || b.is_ascii_whitespace() {
+            continue;
+        }
+        let val = table[b as usize];
+        if val == 255 {
+            return None;
+        }
+        buf = (buf << 6) | (val as u32);
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((buf >> bits) as u8);
+        }
+    }
+    Some(out)
+}
+
+#[tauri::command]
+fn get_launch_file() -> Option<String> {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 {
+        let candidate = &args[1];
+        let p = Path::new(candidate);
+        if p.exists() && p.is_file() {
+            return Some(candidate.clone());
+        }
+    }
+    None
+}
+
+#[tauri::command]
+fn save_binary_file(suggested_name: String, base64_data: String) -> Result<Option<String>, String> {
+    let mut dialog = rfd::FileDialog::new().set_file_name(&suggested_name);
+    if let Some(ext) = Path::new(&suggested_name).extension().and_then(|s| s.to_str()) {
+        dialog = dialog.add_filter("Archivo", &[ext]);
+    }
+    dialog = dialog.add_filter("Todos los archivos (*.*)", &["*"]);
+
+    if let Some(path) = dialog.save_file() {
+        let clean_base64 = if let Some(idx) = base64_data.find(";base64,") {
+            &base64_data[idx + 8..]
+        } else {
+            &base64_data
+        };
+
+        let bytes = decode_base64(clean_base64).ok_or("Error decodificando datos base64")?;
+        fs::write(&path, bytes).map_err(|e| format!("Error al guardar archivo: {}", e))?;
+        Ok(Some(path.to_string_lossy().to_string()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
+fn register_windows_associations() -> Result<bool, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe_path.to_string_lossy();
+
+        let extensions = [
+            "mp4", "mkv", "webm", "avi", "mov", "wmv", "flv", "mp3", "wav", "flac", "m4a", "aac", "ogg", "jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"
+        ];
+
+        for ext in extensions {
+            let cmd = format!(
+                r#"reg add "HKCU\Software\Classes\.{}\OpenWithProgids" /v "WillMultimedia.{}" /t REG_NONE /f"#,
+                ext, ext
+            );
+            let _ = std::process::Command::new("cmd").args(["/C", &cmd]).creation_flags(0x08000000).output();
+
+            let progid_cmd = format!(
+                r#"reg add "HKCU\Software\Classes\WillMultimedia.{}\shell\open\command" /ve /t REG_SZ /d "\"{}\" \"%1\"" /f"#,
+                ext, exe_str
+            );
+            let _ = std::process::Command::new("cmd").args(["/C", &progid_cmd]).creation_flags(0x08000000).output();
+        }
+
+        let app_cmd = format!(
+            r#"reg add "HKCU\Software\Classes\Applications\Will Multimedia.exe\shell\open\command" /ve /t REG_SZ /d "\"{}\" \"%1\"" /f"#,
+            exe_str
+        );
+        let _ = std::process::Command::new("cmd").args(["/C", &app_cmd]).creation_flags(0x08000000).output();
+
+        Ok(true)
+    }
+    #[cfg(not(target_os = "windows"))]
+    Ok(false)
 }
