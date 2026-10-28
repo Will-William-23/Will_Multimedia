@@ -2708,6 +2708,9 @@ function initEventListeners() {
 
   // Audio Playback Controls
   el.btnAudioPlayPause.addEventListener('click', togglePlayPause);
+  if (el.vinylWrap) {
+    el.vinylWrap.addEventListener('click', togglePlayPause);
+  }
   el.btnAudioNext.addEventListener('click', playNext);
   el.btnAudioPrev.addEventListener('click', playPrev);
   el.btnShuffle.addEventListener('click', toggleShuffle);
