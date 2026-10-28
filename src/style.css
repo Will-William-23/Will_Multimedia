@@ -2076,14 +2076,14 @@ kbd {
    IMAGE SECTION (VIEWER & GALLERY)
    ============================================================ */
 .image-view {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
+  width: 100%;
+  height: 100%;
+  position: absolute;
   top: 0;
   left: 0;
   overflow: hidden;
-  display: flex !important;
-  flex-direction: column !important;
+  display: flex;
+  flex-direction: column;
   background: #060910;
 }
 
@@ -2317,9 +2317,9 @@ kbd {
    MULTIMEDIA EDITORS MODAL
    ============================================================ */
 .editor-modal-card {
-  width: 92vw;
-  max-width: 960px;
-  max-height: 90vh;
+  width: 95vw;
+  max-width: 1060px;
+  max-height: 92vh;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -2350,17 +2350,18 @@ kbd {
 .editor-modal-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden !important;
   padding: 14px 2px 2px;
 }
 
 .editor-split {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 22px;
-  min-height: 420px;
+  grid-template-columns: 1fr 380px;
+  gap: 26px;
+  min-height: 440px;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 860px) {
   .editor-split {
     grid-template-columns: 1fr;
   }
@@ -2598,10 +2599,35 @@ kbd {
 .editor-modal-actions {
   margin-top: auto;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
   padding-top: 14px;
   border-top: 1px solid var(--border-subtle);
+  width: 100%;
+}
+
+.editor-modal-actions .btn-save-direct {
+  width: 100%;
+  flex: none;
+}
+
+.editor-actions-subrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.editor-actions-subrow .btn-secondary {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.editor-actions-subrow .btn-save-copy {
+  flex: 1.5;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -3044,6 +3070,31 @@ kbd {
 .btn-save-copy svg {
   width: 15px;
   height: 15px;
+}
+
+/* ============================================================
+   GLOBAL VIEW VISIBILITY OVERRIDES (BULLETPROOF SPECIFICITY)
+   ============================================================ */
+.hidden,
+.view-panel.hidden,
+.home-view.hidden,
+.audio-view.hidden,
+.video-view.hidden,
+.image-view.hidden,
+.header-content.hidden,
+.modal-backdrop.hidden,
+.toast-pill.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -9999 !important;
+}
+
+.image-view.hidden .image-floating-toolbar,
+.image-view.hidden .image-filmstrip-bar,
+.image-view.hidden .image-viewport {
+  display: none !important;
 }
 
 
