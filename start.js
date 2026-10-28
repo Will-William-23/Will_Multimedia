@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import process from 'process';
 
 // ============================================================
@@ -38,6 +38,10 @@ function renderProgressBar(percent, statusText) {
 // Initial draw
 renderProgressBar(currentProgress, currentStatus);
 
+function stripAnsi(str) {
+  return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+}
+
 // Smooth progression timer during linking/compiling
 const ticker = setInterval(() => {
   if (isFinished) {
@@ -45,12 +49,35 @@ const ticker = setInterval(() => {
     return;
   }
   if (currentProgress < 85) {
-    currentProgress += 0.3;
+    currentProgress += 0.4;
+    renderProgressBar(currentProgress, currentStatus);
+  } else if (currentProgress < 97) {
+    // Advance gently during linking so bar never freezes
+    currentProgress += 0.15;
+    if (currentStatus.startsWith('Compilando') || currentStatus.includes('servicios')) {
+      currentStatus = 'Enlazando binario nativo de Windows...';
+    }
     renderProgressBar(currentProgress, currentStatus);
   }
 }, 400);
 
-// Run npx @tauri-apps/cli dev via shell with single string (avoids DEP0190 and EINVAL on Node 22/24)
+// Background check for running app.exe
+const procCheck = setInterval(() => {
+  if (isFinished) {
+    clearInterval(procCheck);
+    return;
+  }
+  if (currentProgress >= 80) {
+    exec('tasklist /FI "IMAGENAME eq app.exe" /NH', (err, stdout) => {
+      if (!err && stdout && stdout.toLowerCase().includes('app.exe')) {
+        clearInterval(procCheck);
+        finishProgress();
+      }
+    });
+  }
+}, 1200);
+
+// Run npx @tauri-apps/cli dev via shell with single string
 const child = spawn('npx @tauri-apps/cli dev', {
   stdio: ['inherit', 'pipe', 'pipe'],
   shell: true,
@@ -59,6 +86,7 @@ const child = spawn('npx @tauri-apps/cli dev', {
 
 child.on('error', (err) => {
   clearInterval(ticker);
+  clearInterval(procCheck);
   console.error('\n\x1b[31m[Error iniciando proceso]:\x1b[0m', err.message);
 });
 
@@ -67,57 +95,59 @@ function handleOutput(data) {
   const lines = text.split(/\r?\n/);
 
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+    const rawClean = stripAnsi(line).trim();
+    if (!rawClean) continue;
 
     // Ignore file watcher EBUSY noise from breaking the progress display
-    if (trimmed.includes('file watcher error') || trimmed.includes('EBUSY')) {
+    if (rawClean.includes('file watcher error') || rawClean.includes('EBUSY')) {
       continue;
     }
 
     // Vite ready
-    if (trimmed.includes('Local:') || trimmed.includes('ready in')) {
+    if (rawClean.includes('Local:') || rawClean.includes('ready in') || rawClean.includes('localhost:')) {
       currentStatus = 'Servidor web Vite activo...';
       currentProgress = Math.max(currentProgress, 25);
       renderProgressBar(currentProgress, currentStatus);
     }
     // Downloading crates
-    else if (trimmed.startsWith('Downloading ')) {
-      const parts = trimmed.split(' ');
-      const crateName = parts[1] || 'paquete';
+    else if (rawClean.includes('Downloading')) {
+      const parts = rawClean.split(' ');
+      const idx = parts.indexOf('Downloading');
+      const crateName = parts[idx + 1] || 'paquetes';
       currentStatus = `Descargando: ${crateName}`;
       renderProgressBar(currentProgress, currentStatus);
     }
     // Compiling Rust Crates
-    else if (trimmed.startsWith('Compiling ')) {
-      const parts = trimmed.split(' ');
-      const crateName = parts[1] || 'motor';
+    else if (rawClean.includes('Compiling')) {
+      const parts = rawClean.split(' ');
+      const idx = parts.indexOf('Compiling');
+      const crateName = parts[idx + 1] || 'módulos';
       currentStatus = `Compilando Rust: ${crateName}`;
-      if (currentProgress < 88) {
-        currentProgress = Math.min(88, currentProgress + 0.8);
+      if (currentProgress < 90) {
+        currentProgress = Math.min(90, currentProgress + 1.2);
       }
       renderProgressBar(currentProgress, currentStatus);
     }
     // Finished Rust backend compilation
-    else if (trimmed.includes('Finished dev') || trimmed.includes('Finished `dev`')) {
-      currentStatus = 'Motor Rust compilado... Enlazando';
-      currentProgress = Math.max(currentProgress, 92);
+    else if (rawClean.includes('Finished') && (rawClean.includes('dev') || rawClean.includes('profile'))) {
+      currentStatus = 'Motor compilado... Enlazando';
+      currentProgress = Math.max(currentProgress, 94);
       renderProgressBar(currentProgress, currentStatus);
     }
     // Running binary executable
-    else if (trimmed.includes('Running target') || trimmed.includes('Running `target')) {
+    else if (rawClean.includes('Running') && (rawClean.includes('target') || rawClean.includes('app.exe'))) {
       currentStatus = 'Abriendo ventana nativa...';
-      currentProgress = Math.max(currentProgress, 96);
+      currentProgress = Math.max(currentProgress, 98);
       renderProgressBar(currentProgress, currentStatus);
-      setTimeout(() => finishProgress(), 1500);
+      setTimeout(() => finishProgress(), 1000);
     }
     // Real native window ready signal
-    else if (trimmed.includes('WILL_MULTIMEDIA_NATIVE_READY')) {
+    else if (rawClean.includes('WILL_MULTIMEDIA_NATIVE_READY')) {
       finishProgress();
     }
     // Critical Rust compile errors
-    else if (trimmed.includes('error[E') || (trimmed.startsWith('error:') && !trimmed.includes('EBUSY'))) {
-      console.log(`\n\x1b[31m[Error de compilación]\x1b[0m ${trimmed}`);
+    else if (rawClean.includes('error[E') || (rawClean.startsWith('error:') && !rawClean.includes('EBUSY'))) {
+      console.log(`\n\x1b[31m[Error de compilación]\x1b[0m ${rawClean}`);
     }
   }
 }
@@ -129,6 +159,7 @@ function finishProgress() {
   if (isFinished) return;
   isFinished = true;
   clearInterval(ticker);
+  clearInterval(procCheck);
 
   currentProgress = 100;
   renderProgressBar(100, '¡Listo! Interfaz abierta');
