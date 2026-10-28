@@ -2629,7 +2629,9 @@ function initEventListeners() {
   el.btnImageOpenFiles.addEventListener('click', () => openImageFiles(false));
   el.btnImageOpenFolder.addEventListener('click', openImageFolder);
   el.btnImageEdit.addEventListener('click', () => openEditorModal('image'));
-  el.btnImageStageEdit.addEventListener('click', () => openEditorModal('image'));
+  if (el.btnImageStageEdit) {
+    el.btnImageStageEdit.addEventListener('click', () => openEditorModal('image'));
+  }
   el.btnImagePrev.addEventListener('click', prevImage);
   el.btnImageNext.addEventListener('click', nextImage);
   el.btnImageZoomIn.addEventListener('click', () => {
