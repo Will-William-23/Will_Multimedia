@@ -574,6 +574,16 @@
               </button>
             </div>
             <div class="toolbar-divider"></div>
+            <!-- Slideshow Play / Pause -->
+            <div class="toolbar-group">
+              <button id="btnImageSlideshow" class="btn-img-tool btn-img-slideshow" title="Reproducir / Pausar Pase de Fotos">
+                <svg viewBox="0 0 24 24" fill="currentColor" id="imageSlideshowIcon">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </button>
+              <span id="imageSlideshowBadge" class="slideshow-pill hidden">PASE ACTIVO</span>
+            </div>
+            <div class="toolbar-divider"></div>
             <div class="toolbar-group">
               <button id="btnImageZoomIn" class="btn-img-tool" title="Acercar (+)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
@@ -818,129 +828,216 @@
 
                 <div class="editor-modal-actions">
                   <button id="btnResetImageFilter" class="btn-secondary">Restablecer</button>
-                  <button id="btnSaveEditedImage" class="btn-primary">
+                  <button id="btnSaveDirectImage" class="btn-save-direct" title="Reemplazar directamente el archivo original">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Guardar en el Propio Archivo</span>
+                  </button>
+                  <button id="btnSaveEditedImage" class="btn-save-copy" title="Guardar como una copia nueva">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    <span>Guardar Imagen</span>
+                    <span>Guardar como Copia...</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 2. SUB-PANEL: EDITOR DE VIDEO (CORTE / VELOCIDAD / AUDIO) -->
+          <!-- 2. SUB-PANEL: EDITOR DE VIDEO (RECORTE ESTILO IPHONE) -->
           <div id="editorVideoPanel" class="editor-subpanel hidden">
-            <div class="editor-split">
-              <div class="editor-preview-box">
-                <video id="videoEditorPreview" controls playsinline></video>
+            <div class="iphone-editor-layout">
+              <!-- Player Screen -->
+              <div class="iphone-preview-screen">
+                <video id="videoEditorPreview" playsinline></video>
+                <div class="iphone-center-play-overlay" id="btnOverlayVideoPlay">
+                  <svg viewBox="0 0 24 24" fill="currentColor" id="overlayVideoPlayIcon">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
               </div>
 
-              <div class="editor-controls-box">
-                <h4>Recortar Video</h4>
-                <p class="editor-hint">Selecciona el fragmento que deseas extraer y guardar.</p>
+              <!-- iPhone Trimmer Deck -->
+              <div class="iphone-trimmer-deck">
+                <!-- Header: Times & Play Cut button -->
+                <div class="iphone-trimmer-topbar">
+                  <div class="trim-chip start-chip">
+                    <span class="chip-label">INICIO</span>
+                    <strong id="videoTrimStartBadge">00:00.0</strong>
+                  </div>
 
-                <div class="editor-ctrl-group">
-                  <div class="time-inputs-row">
-                    <div class="time-field">
-                      <label>Inicio (seg)</label>
-                      <input type="number" id="videoTrimStart" min="0" step="0.5" value="0" />
-                      <button id="btnSetVideoStart" class="btn-sub-xs">Marcar Actual</button>
+                  <button id="btnPreviewVideoClip" class="btn-iphone-play-cut" title="Reproducir corte seleccionado">
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="videoClipPlayIcon">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span id="videoClipPlayText">Reproducir Fragmento</span>
+                  </button>
+
+                  <div class="trim-chip end-chip">
+                    <span class="chip-label">FIN</span>
+                    <strong id="videoTrimEndBadge">00:00.0</strong>
+                  </div>
+                </div>
+
+                <!-- Interactive iPhone Strip Track: <-|00------------------|--------->4.00 -->
+                <div class="iphone-timeline-track" id="videoTimelineTrack">
+                  <div class="iphone-dim-mask dim-left" id="videoDimLeft"></div>
+
+                  <!-- Yellow iPhone Frame Box -->
+                  <div class="iphone-trim-frame" id="videoTrimFrame">
+                    <!-- Left Handle <-| -->
+                    <div class="iphone-handle handle-left" id="videoHandleLeft" title="Arrastrar para ajustar inicio">
+                      <div class="handle-icon">&lt;&hyphen;|</div>
+                      <div class="handle-bars"><span></span><span></span></div>
                     </div>
-                    <div class="time-field">
-                      <label>Fin (seg)</label>
-                      <input type="number" id="videoTrimEnd" min="0" step="0.5" value="0" />
-                      <button id="btnSetVideoEnd" class="btn-sub-xs">Marcar Actual</button>
+
+                    <!-- Scrubber Playhead Line inside selection -->
+                    <div class="iphone-playhead" id="videoPlayhead">
+                      <div class="playhead-top"></div>
+                      <div class="playhead-stem"></div>
+                    </div>
+
+                    <!-- Right Handle |-> -->
+                    <div class="iphone-handle handle-right" id="videoHandleRight" title="Arrastrar para ajustar fin">
+                      <div class="handle-bars"><span></span><span></span></div>
+                      <div class="handle-icon">|&hyphen;&gt;</div>
                     </div>
                   </div>
-                  <div class="duration-readout">
+
+                  <div class="iphone-dim-mask dim-right" id="videoDimRight"></div>
+                </div>
+
+                <!-- Fine-tuning and duration bar -->
+                <div class="iphone-sub-bar">
+                  <div class="fine-adjust-group">
+                    <span class="fine-label">Ajuste fino:</span>
+                    <button id="btnVideoStartMinus" class="btn-micro" title="Retroceder 0.1s">-0.1s</button>
+                    <button id="btnVideoStartPlus" class="btn-micro" title="Avanzar 0.1s">+0.1s</button>
+                  </div>
+
+                  <div class="trim-duration-display">
                     <span>Duración del corte:</span>
-                    <strong id="videoTrimDuration">00:00</strong>
+                    <strong id="videoTrimDuration">00:00.0</strong>
+                  </div>
+
+                  <div class="fine-adjust-group">
+                    <span class="fine-label">Ajuste fino:</span>
+                    <button id="btnVideoEndMinus" class="btn-micro" title="Retroceder 0.1s">-0.1s</button>
+                    <button id="btnVideoEndPlus" class="btn-micro" title="Avanzar 0.1s">+0.1s</button>
                   </div>
                 </div>
 
-                <div class="editor-ctrl-group">
-                  <label>Velocidad del Fragmento</label>
-                  <div class="ratio-btn-group">
-                    <button class="btn-ctrl-sub active" data-vspeed="1.0">1.0x</button>
-                    <button class="btn-ctrl-sub" data-vspeed="1.25">1.25x</button>
-                    <button class="btn-ctrl-sub" data-vspeed="1.5">1.5x</button>
-                    <button class="btn-ctrl-sub" data-vspeed="2.0">2.0x</button>
-                  </div>
-                </div>
+                <input type="hidden" id="videoTrimStart" value="0" />
+                <input type="hidden" id="videoTrimEnd" value="0" />
 
-                <div class="editor-ctrl-group">
-                  <label>Pista de Audio</label>
-                  <div class="checkbox-row">
-                    <label class="custom-checkbox">
-                      <input type="checkbox" id="videoKeepAudio" checked />
-                      <span>Mantener audio original</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="editor-modal-actions">
-                  <button id="btnPreviewVideoClip" class="btn-secondary">Previsualizar Fragmento</button>
-                  <button id="btnSaveEditedVideo" class="btn-primary">
+                <!-- Action Buttons: Save directly into current file vs Save as new copy -->
+                <div class="iphone-actions-footer">
+                  <button id="btnSaveDirectVideo" class="btn-save-direct" title="Reemplaza directamente el archivo original de video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Guardar en el Propio Archivo</span>
+                  </button>
+                  <button id="btnSaveEditedVideo" class="btn-save-copy" title="Guardar como un nuevo archivo">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    <span>Guardar Video Recortado</span>
+                    <span>Guardar como Copia Nueva...</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 3. SUB-PANEL: EDITOR DE AUDIO (RECORTE / FUNDIDO / EXPORTAR WAV) -->
+          <!-- 3. SUB-PANEL: EDITOR DE AUDIO (RECORTE ESTILO IPHONE) -->
           <div id="editorAudioPanel" class="editor-subpanel hidden">
-            <div class="editor-split">
-              <div class="editor-preview-box audio-editor-canvas-wrap">
-                <canvas id="audioEditorWaveform" width="560" height="140"></canvas>
-                <div class="audio-editor-playback-bar">
-                  <button id="btnAudioEditorPlay" class="btn-player-main-sm">▶ Reproducir</button>
-                  <span id="audioEditorCurrentTime" class="time-label">00:00 / 00:00</span>
-                </div>
+            <div class="iphone-editor-layout">
+              <!-- Waveform Screen -->
+              <div class="iphone-preview-screen audio-waveform-screen">
+                <canvas id="audioEditorWaveform" width="760" height="130"></canvas>
               </div>
 
-              <div class="editor-controls-box">
-                <h4>Recortar y Editar Audio</h4>
-                <p class="editor-hint">Define puntos de inicio y final para exportar tu clip de audio.</p>
+              <!-- iPhone Trimmer Deck for Audio -->
+              <div class="iphone-trimmer-deck">
+                <div class="iphone-trimmer-topbar">
+                  <div class="trim-chip start-chip">
+                    <span class="chip-label">PUNTO A</span>
+                    <strong id="audioTrimStartBadge">00:00.0</strong>
+                  </div>
 
-                <div class="editor-ctrl-group">
-                  <div class="time-inputs-row">
-                    <div class="time-field">
-                      <label>Punto A - Inicio (s)</label>
-                      <input type="number" id="audioTrimStart" min="0" step="0.5" value="0" />
-                      <button id="btnSetAudioStart" class="btn-sub-xs">Marcar Actual</button>
+                  <button id="btnPreviewAudioClip" class="btn-iphone-play-cut" title="Escuchar corte seleccionado">
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="audioClipPlayIcon">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span id="audioClipPlayText">Escuchar Fragmento</span>
+                  </button>
+
+                  <div class="trim-chip end-chip">
+                    <span class="chip-label">PUNTO B</span>
+                    <strong id="audioTrimEndBadge">00:00.0</strong>
+                  </div>
+                </div>
+
+                <!-- Interactive iPhone Strip Track for Audio -->
+                <div class="iphone-timeline-track" id="audioTimelineTrack">
+                  <div class="iphone-dim-mask dim-left" id="audioDimLeft"></div>
+
+                  <!-- Yellow iPhone Frame Box -->
+                  <div class="iphone-trim-frame" id="audioTrimFrame">
+                    <div class="iphone-handle handle-left" id="audioHandleLeft" title="Arrastrar inicio">
+                      <div class="handle-icon">&lt;&hyphen;|</div>
+                      <div class="handle-bars"><span></span><span></span></div>
                     </div>
-                    <div class="time-field">
-                      <label>Punto B - Fin (s)</label>
-                      <input type="number" id="audioTrimEnd" min="0" step="0.5" value="0" />
-                      <button id="btnSetAudioEnd" class="btn-sub-xs">Marcar Actual</button>
+
+                    <div class="iphone-playhead" id="audioPlayhead">
+                      <div class="playhead-top"></div>
+                      <div class="playhead-stem"></div>
+                    </div>
+
+                    <div class="iphone-handle handle-right" id="audioHandleRight" title="Arrastrar fin">
+                      <div class="handle-bars"><span></span><span></span></div>
+                      <div class="handle-icon">|&hyphen;&gt;</div>
                     </div>
                   </div>
-                  <div class="duration-readout">
+
+                  <div class="iphone-dim-mask dim-right" id="audioDimRight"></div>
+                </div>
+
+                <div class="iphone-sub-bar">
+                  <div class="fine-adjust-group">
+                    <span class="fine-label">Ajuste fino:</span>
+                    <button id="btnAudioStartMinus" class="btn-micro" title="Retroceder 0.1s">-0.1s</button>
+                    <button id="btnAudioStartPlus" class="btn-micro" title="Avanzar 0.1s">+0.1s</button>
+                  </div>
+
+                  <div class="trim-duration-display">
                     <span>Duración final:</span>
-                    <strong id="audioTrimDuration">00:00</strong>
+                    <strong id="audioTrimDuration">00:00.0</strong>
+                  </div>
+
+                  <div class="fine-adjust-group">
+                    <span class="fine-label">Ajuste fino:</span>
+                    <button id="btnAudioEndMinus" class="btn-micro" title="Retroceder 0.1s">-0.1s</button>
+                    <button id="btnAudioEndPlus" class="btn-micro" title="Avanzar 0.1s">+0.1s</button>
                   </div>
                 </div>
 
-                <div class="editor-ctrl-group">
-                  <label>Efectos de Fundido</label>
-                  <div class="checkbox-col">
-                    <label class="custom-checkbox">
-                      <input type="checkbox" id="audioFadeIn" />
-                      <span>Fundido de entrada (Fade In 1.5s)</span>
-                    </label>
-                    <label class="custom-checkbox">
-                      <input type="checkbox" id="audioFadeOut" />
-                      <span>Fundido de salida (Fade Out 1.5s)</span>
-                    </label>
-                  </div>
+                <input type="hidden" id="audioTrimStart" value="0" />
+                <input type="hidden" id="audioTrimEnd" value="0" />
+
+                <!-- Fade effects -->
+                <div class="audio-effects-bar">
+                  <label class="custom-checkbox">
+                    <input type="checkbox" id="audioFadeIn" />
+                    <span>Fundido de entrada (Fade In 1.5s)</span>
+                  </label>
+                  <label class="custom-checkbox">
+                    <input type="checkbox" id="audioFadeOut" />
+                    <span>Fundido de salida (Fade Out 1.5s)</span>
+                  </label>
                 </div>
 
-                <div class="editor-modal-actions">
-                  <button id="btnPreviewAudioClip" class="btn-secondary">Escuchar Fragmento</button>
-                  <button id="btnSaveEditedAudio" class="btn-primary">
+                <div class="iphone-actions-footer">
+                  <button id="btnSaveDirectAudio" class="btn-save-direct" title="Reemplazar directamente el archivo original de audio">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Guardar en el Propio Archivo (.wav)</span>
+                  </button>
+                  <button id="btnSaveEditedAudio" class="btn-save-copy" title="Exportar nueva copia">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                    <span>Exportar Audio (.wav)</span>
+                    <span>Guardar como Copia Nueva (.wav)</span>
                   </button>
                 </div>
               </div>

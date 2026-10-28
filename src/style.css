@@ -688,7 +688,7 @@ body {
 }
 
 /* Views display toggling */
-.view-panel, .welcome-view, .home-view, .audio-view, .video-view {
+.view-panel, .welcome-view, .home-view, .audio-view, .video-view, .image-view {
   width: 100%;
   height: 100%;
   position: absolute;
@@ -2076,15 +2076,20 @@ kbd {
    IMAGE SECTION (VIEWER & GALLERY)
    ============================================================ */
 .image-view {
-  width: 100%;
-  height: 100%;
-  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0;
+  left: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #060910;
 }
 
 .image-stage-wrap {
+  width: 100%;
+  height: 100%;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -2097,17 +2102,17 @@ kbd {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: 30;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 6px 14px;
-  background: rgba(15, 23, 42, 0.88);
+  background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-full);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
 }
 
 .toolbar-group {
@@ -2148,6 +2153,25 @@ kbd {
   height: 16px;
 }
 
+.btn-img-slideshow.active {
+  background: rgba(217, 70, 239, 0.28);
+  border-color: #d946ef;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
+}
+
+.slideshow-pill {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #f0abfc;
+  background: rgba(217, 70, 239, 0.2);
+  border: 1px solid rgba(217, 70, 239, 0.4);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
 .img-counter, .zoom-label {
   font-size: 12px;
   font-weight: 700;
@@ -2185,6 +2209,7 @@ kbd {
 }
 
 .image-viewport {
+  width: 100%;
   flex: 1;
   background: #060910;
   overflow: hidden;
@@ -2200,6 +2225,8 @@ kbd {
 }
 
 .image-canvas-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2210,7 +2237,7 @@ kbd {
 
 .main-image-display {
   max-width: 90vw;
-  max-height: 75vh;
+  max-height: calc(100vh - 190px);
   object-fit: contain;
   pointer-events: none;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
@@ -2621,4 +2648,402 @@ kbd {
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
 }
+
+/* ============================================================
+   IPHONE-STYLE MEDIA TRIMMER & EDITORS
+   ============================================================ */
+.iphone-editor-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.iphone-preview-screen {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background: #000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.iphone-preview-screen video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.audio-waveform-screen {
+  height: 140px;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+.iphone-center-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all var(--transition-fast);
+  z-index: 5;
+}
+
+.iphone-center-play-overlay:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  background: rgba(234, 179, 8, 0.85);
+  border-color: #facc15;
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.6);
+}
+
+.iphone-center-play-overlay svg {
+  width: 24px;
+  height: 24px;
+  margin-left: 2px;
+}
+
+.iphone-trimmer-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.iphone-trimmer-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trim-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  min-width: 90px;
+}
+
+.trim-chip .chip-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.trim-chip strong {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: #facc15;
+}
+
+.btn-iphone-play-cut {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+}
+
+.btn-iphone-play-cut:hover {
+  background: linear-gradient(135deg, #facc15, #eab308);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(234, 179, 8, 0.5);
+}
+
+.btn-iphone-play-cut svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================================
+   IPHONE TIMELINE TRACK & DUAL DRAGGABLE HANDLES
+   ============================================================ */
+.iphone-timeline-track {
+  position: relative;
+  width: 100%;
+  height: 64px;
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  user-select: none;
+  cursor: pointer;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Dim masks for cut out regions */
+.iphone-dim-mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.iphone-dim-mask.dim-left {
+  left: 0;
+  width: 0%;
+}
+
+.iphone-dim-mask.dim-right {
+  right: 0;
+  width: 0%;
+}
+
+/* Glowing Gold Trim Frame */
+.iphone-trim-frame {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0%;
+  width: 100%;
+  border-top: 4px solid #facc15;
+  border-bottom: 4px solid #facc15;
+  background: rgba(250, 204, 21, 0.08);
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.35);
+  z-index: 5;
+  box-sizing: border-box;
+}
+
+/* Draggable Handles: Left & Right */
+.iphone-handle {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 26px;
+  background: #facc15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  color: #000;
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.iphone-handle:hover, .iphone-handle:active {
+  background: #fef08a;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.8);
+}
+
+.iphone-handle.handle-left {
+  left: 0;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.iphone-handle.handle-right {
+  right: 0;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.handle-icon {
+  font-size: 10px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.handle-bars {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.handle-bars span {
+  width: 2px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 1px;
+}
+
+/* White Scrubber Playhead inside selection */
+.iphone-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0%;
+  width: 2px;
+  background: #fff;
+  z-index: 8;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+}
+
+.playhead-top {
+  position: absolute;
+  top: -5px;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.playhead-stem {
+  width: 100%;
+  height: 100%;
+}
+
+/* Fine-tuning bar */
+.iphone-sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+}
+
+.fine-adjust-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fine-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.btn-micro {
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-micro:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.trim-duration-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.trim-duration-display strong {
+  color: #facc15;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.audio-effects-bar {
+  display: flex;
+  gap: 20px;
+  padding: 6px 4px;
+}
+
+/* Footer Action Buttons: Overwrite original file vs Save Copy */
+.iphone-actions-footer {
+  display: flex;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-save-direct {
+  flex: 1.2;
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  color: #000;
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3);
+}
+
+.btn-save-direct:hover {
+  background: linear-gradient(135deg, #facc15, #eab308);
+  box-shadow: 0 6px 18px rgba(234, 179, 8, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-save-direct svg {
+  width: 17px;
+  height: 17px;
+}
+
+.btn-save-copy {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all var(--transition-fast);
+}
+
+.btn-save-copy:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-save-copy svg {
+  width: 15px;
+  height: 15px;
+}
+
 

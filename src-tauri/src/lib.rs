@@ -618,10 +618,24 @@ pub fn run() {
             trim_memory,
             get_launch_file,
             save_binary_file,
+            overwrite_binary_file,
             register_windows_associations
         ])
         .run(tauri::generate_context!())
         .expect("error while running will multimedia player");
+}
+
+#[tauri::command]
+fn overwrite_binary_file(target_path: String, base64_data: String) -> Result<String, String> {
+    let clean_base64 = if let Some(idx) = base64_data.find(";base64,") {
+        &base64_data[idx + 8..]
+    } else {
+        &base64_data
+    };
+
+    let bytes = decode_base64(clean_base64).ok_or("Error decodificando datos base64")?;
+    fs::write(&target_path, bytes).map_err(|e| format!("Error sobrescribiendo archivo: {}", e))?;
+    Ok(target_path)
 }
 
 fn decode_base64(input: &str) -> Option<Vec<u8>> {
